@@ -7,4 +7,5 @@
 * Author: Sylvan Laurence
 * Author URI: https://slcservices.ch/
 **/
-?>
+
+defined( 'ABSPATH' ) || exit;
