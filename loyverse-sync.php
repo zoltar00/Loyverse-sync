@@ -8,4 +8,6 @@
 * Author URI: https://slcservices.ch/
 **/
 
-defined( 'ABSPATH' ) || exit;
+defined( 'ABSPATH' ) or die('Unauthorized Access!');
+
+add_action('admin_init','callback_function_name');
