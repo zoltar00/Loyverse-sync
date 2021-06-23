@@ -10,4 +10,13 @@
 
 defined( 'ABSPATH' ) or die('Unauthorized Access!');
 
-add_action('admin_init','callback_function_name');
+//Action when user logs into admin  panel
+add_shortcode('external_data', 'callback_function_name');
+
+function callback_function_name(){
+
+    return 'Call is working';
+
+
+
+}
