@@ -318,6 +318,7 @@ add_action('init','register_loyverse_items');
 
 function get_items_from_loyverse(){
 
+	$loyverse_items = [];
 	$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
 	$response = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items', array(
 		'headers' => array(
