@@ -7,6 +7,8 @@
  * @package Restaurant Zone
  */
 
+define( 'WP_DEBUG', true );
+
 include get_theme_file_path( 'vendor/wptrt/autoload/src/Restaurant_Zone_Loader.php' );
 
 $restaurant_zone_loader = new \WPTRT\Autoload\Restaurant_Zone_Loader();
@@ -257,6 +259,7 @@ require get_template_directory() . '/inc/template-functions.php';
  */
 require get_template_directory() . '/inc/customizer.php';
 
+
 /*dropdown page sanitization*/
 function restaurant_zone_sanitize_dropdown_pages( $page_id, $setting ) {
 	// Ensure $input is an absolute integer.
@@ -304,6 +307,9 @@ function restaurant_zone_skip_link_focus_fix() {
 }
 add_action( 'wp_print_footer_scripts', 'restaurant_zone_skip_link_focus_fix' );
 
+add_action('init','register_loyverse_items');
+ini_set( 'error_log', WP_CONTENT_DIR . '/debug.log' );
+
 function register_loyverse_items(){
 
 	register_post_type('Loyverse_Item',[
@@ -314,7 +320,10 @@ function register_loyverse_items(){
 	]);
 }
 
-add_action('init','register_loyverse_items');
+add_action('wp_ajax_nopriv_get_items_from_loyverse','get_items_from_loyverse');
+add_action('wp_ajax_get_items_from_loyverse','get_items_from_loyverse');
+
+    // Return total count and values found in array	
 
 function get_items_from_loyverse(){
 
@@ -326,6 +335,58 @@ function get_items_from_loyverse(){
 		),
 	)));
 
+	$data = json_decode($response,true);
+
+	if( ! is_array($data) || empty($data)){
+
+		return false;
+		error_log ("Not an Array!");
+	}
+
+	$loyverse_items[] = $data;
+
+	foreach($loyverse_items[0] as $loyverse_item){
 
 
+		foreach($loyverse_item as $item){
+
+			$loyverse_item_slug = sanitize_title($item['item_name']); 
+
+			$inserted_item = wp_insert_post([
+
+					'post_name' => $loyverse_item_slug,
+					'post_title' => $loyverse_item_slug,
+					'post_type' => 'Loyverse_Item',
+					'post_status' => 'publish'
+
+				]);
+
+				if(is_wp_error($inserted_item)){
+
+					continue;
+				}
+
+				$fillable =[
+
+					'field_60dcd92525b70'=>'name',
+					'field_60dcd93b25b71'=>'sku',
+					'field_60dcd94325b72'=>'price',
+				];
+
+				foreach($fillable as $key => $name){
+
+					update_field($key,$item->$name, $inserted_item);
+
+				}
+		}
+		
+	}
+	
+	wp_remote_post( admin_url('admin-ajax.php?action=get_items_from_loyverse'),[
+
+		'blocking' =>false,
+		'sslverify' => false
+
+	]);
+	
 }
