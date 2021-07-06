@@ -323,9 +323,16 @@ function register_loyverse_items(){
 add_action('wp_ajax_nopriv_get_items_from_loyverse','get_items_from_loyverse');
 add_action('wp_ajax_get_items_from_loyverse','get_items_from_loyverse');
 
-    // Return total count and values found in array	
+// Return total count and values found in array	
 
 function get_items_from_loyverse(){
+
+	//delete all posts of Loyverse items first
+
+	$allposts= get_posts( array('post_type'=>'Loyverse_Item','numberposts'=>-1) );
+	foreach ($allposts as $eachpost) {
+  		wp_delete_post( $eachpost->ID, true );
+	}
 
 	$loyverse_items = [];
 	$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
@@ -352,41 +359,40 @@ function get_items_from_loyverse(){
 
 			$loyverse_item_slug = sanitize_title($item['item_name']); 
 
-			$inserted_item = wp_insert_post([
-
-					'post_name' => $loyverse_item_slug,
-					'post_title' => $loyverse_item_slug,
-					'post_type' => 'Loyverse_Item',
+				$args = array(
+					'name'        => $loyverse_item_slug,
+					'post_type'   => 'Loyverse_Item',
 					'post_status' => 'publish'
+				);
+				$my_posts = get_posts($args);
+                if(! $my_posts ){
+					$inserted_item = wp_insert_post([
 
-				]);
+							'post_name' => $loyverse_item_slug,
+							'post_title' => $loyverse_item_slug,
+							'post_type' => 'Loyverse_Item',
+							'post_status' => 'publish'
 
-				if(is_wp_error($inserted_item)){
+						]);
 
-					continue;
+						if(is_wp_error($inserted_item)){
+
+							continue;
+						}
+
+						update_field('field_60dcd92525b70',$item['item_name'], $inserted_item);
+						update_field('field_60dcd93b25b71',$item['variants']['0']['sku'], $inserted_item);
+						update_field('field_60dcd94325b72',$item['variants']['0']['stores']['0']['price'], $inserted_item);
+
 				}
-
-				$fillable =[
-
-					'field_60dcd92525b70'=>'name',
-					'field_60dcd93b25b71'=>'sku',
-					'field_60dcd94325b72'=>'price',
-				];
-
-				foreach($fillable as $key => $name){
-
-					update_field($key,$item->$name, $inserted_item);
-
-				}
-		}
-		
+		}	
 	}
-	
-	wp_remote_post( admin_url('admin-ajax.php?action=get_items_from_loyverse'),[
+/**	
+*	wp_remote_post( admin_url('admin-ajax.php?action=get_items_from_loyverse'),[
 
-		'blocking' =>false,
-		'sslverify' => false
+*		'blocking' =>false,
+*		'sslverify' => false
 
-	]);
-	
+*	]);
+	*/
 }

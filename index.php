@@ -41,24 +41,24 @@ get_header(); ?>
                             print_r($loyverse_item);
                             echo '</pre>';
                             echo '</br>';
+
+
                             foreach($loyverse_item as $item){
 
-                                echo '<pre>';
-                                print_r("Item");
-                                echo '</br>';
-                                print_r($item['item_name']);
-                                echo '</pre>';
-                                echo '</br>';   
+                                $loyverse_item_slug = sanitize_title($item['item_name']); 
 
-                                $loyverse_item_slug = sanitize_title($item['item_name']);   
-
+                                $args = array(
+                                    'name'        => $loyverse_item_slug,
+                                    'post_type'   => 'Loyverse_Item',
+                                    'post_status' => 'publish'
+                                );
+                                $my_posts = get_posts($args);
+                                if( $my_posts ) :
+                                echo 'ID on the post found is: ' . $my_posts[0]->ID;
+                                endif;
                                 echo '<pre>';
-                                print_r("Loyverse Item Slug");
-                                echo '</br>';
-                                print_r($loyverse_item_slug);
-                                echo '</pre>';
-                                echo '</br>';
-                           }
+
+                            }                           
                         }
 
                     ?>
