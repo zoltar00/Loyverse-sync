@@ -17,6 +17,13 @@ $restaurant_zone_loader->restaurant_zone_add( 'WPTRT\\Customize\\Section', get_t
 
 $restaurant_zone_loader->restaurant_zone_register();
 
+$autoloader = dirname( __FILE__ ) . '/vendor/autoload.php';
+if ( is_readable( $autoloader ) ) {
+	require_once $autoloader;
+}
+
+use Automattic\WooCommerce\Client;
+
 if ( ! function_exists( 'restaurant_zone_setup' ) ) :
 	/**
 	 * Sets up theme defaults and registers support for various WordPress features.
@@ -335,6 +342,21 @@ function get_items_from_loyverse(){
 	}
 
 	$loyverse_items = [];
+
+	/**Connect to WooCommerce */
+
+	$woocommerce = new Client(
+		'https://mammamia.mimlab.ch',
+		'ck_99b4d2a4d51cad847b882430b5406619528b8922',
+		'cs_ce509e4cb542d9dbfcba19c538961df957780290',
+		[
+			'wp_api' => true,
+			'version' => 'wc/v3'
+		]
+	);
+
+
+	/** Connect to Loyverse */
 	$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
 	$response = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items', array(
 		'headers' => array(
@@ -359,31 +381,54 @@ function get_items_from_loyverse(){
 
 			$loyverse_item_slug = sanitize_title($item['item_name']); 
 
-				$args = array(
+			 	$args = array(
 					'name'        => $loyverse_item_slug,
 					'post_type'   => 'Loyverse_Item',
 					'post_status' => 'publish'
 				);
 				$my_posts = get_posts($args);
-                if(! $my_posts ){
-					$inserted_item = wp_insert_post([
+				
+                 if(! $my_posts ){
+					 
+					foreach($item['variants'] as $variants){
+						$inserted_item = wp_insert_post([
 
-							'post_name' => $loyverse_item_slug,
-							'post_title' => $loyverse_item_slug,
-							'post_type' => 'Loyverse_Item',
-							'post_status' => 'publish'
+								'post_name' => $loyverse_item_slug,
+								'post_title' => $loyverse_item_slug,
+								'post_type' => 'Loyverse_Item',
+								'post_status' => 'publish'
 
-						]);
+							]);
 
-						if(is_wp_error($inserted_item)){
+							if(is_wp_error($inserted_item)){
 
-							continue;
-						}
+								continue;
+							}
+							$price = $variants['stores']['0']['price'];
+							$price = $price.".00";
+						
+							update_field('field_60dcd92525b70',$item['item_name'], $inserted_item);
+							update_field('field_60dcd93b25b71',$variants['sku'], $inserted_item);
+							update_field('field_60e5e9af1e83f',$variants['option1_value'],$inserted_item);
+							update_field('field_60dcd94325b72',$price, $inserted_item);
 
-						update_field('field_60dcd92525b70',$item['item_name'], $inserted_item);
-						update_field('field_60dcd93b25b71',$item['variants']['0']['sku'], $inserted_item);
-						update_field('field_60dcd94325b72',$item['variants']['0']['stores']['0']['price'], $inserted_item);
+							/** Create stuff for woocommerce product */
+							$prod_data = [
+								'name'          => $loyverse_item_slug,
+								'type'          => 'simple',
+								'regular_price' => $price,
+								'sku' => $variants['sku'],
+								'description'   => $loyverse_item_slug,
+								'categories'    => [
+									[
+										'id' => 17,
+									],
+								],
+							];
 
+							/**Send to WooCommerce */
+							$woocommerce->post( 'products', $prod_data );
+					}
 				}
 		}	
 	}

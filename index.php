@@ -18,48 +18,60 @@ get_header(); ?>
         <div class="row">
             <div id="primary" class="content-area col-md-12 <?php echo is_active_sidebar('sidebar-1') ? "col-lg-9" : "col-lg-12"; ?>">
                 <main id="main" class="site-main">
+                <?php
+                    echo 'Curl: ', function_exists('curl_version') ? 'Enabled' . "\xA" : 'Disabled' . "\xA";
+                    ?>
                     <?php 
 
                         echo 'Hello World!';
                         
-                        $token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
-                        $response = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items', array(
-                            'headers' => array(
-                                'Authorization' => 'Bearer ' . $token
-                            ),
-                        )));
-
-                        $data = json_decode($response,true);
-
-                        $loyverse_items[] = $data;
-
-                        foreach($loyverse_items[0] as $loyverse_item){
-
-                            echo '<pre>';
-                            print_r("Loyverse item");
-                            echo '</br>';
-                            print_r($loyverse_item);
-                            echo '</pre>';
-                            echo '</br>';
-
-
-                            foreach($loyverse_item as $item){
-
-                                $loyverse_item_slug = sanitize_title($item['item_name']); 
-
-                                $args = array(
-                                    'name'        => $loyverse_item_slug,
-                                    'post_type'   => 'Loyverse_Item',
-                                    'post_status' => 'publish'
-                                );
-                                $my_posts = get_posts($args);
-                                if( $my_posts ) :
-                                echo 'ID on the post found is: ' . $my_posts[0]->ID;
-                                endif;
-                                echo '<pre>';
-
-                            }                           
+                        /** Authorization to Woocommerce */
+                        $autoloader = dirname( __FILE__ ) . '/vendor/autoload.php';
+                        if ( is_readable( $autoloader ) ) {
+                            require_once $autoloader;
                         }
+                        
+                        use Automattic\WooCommerce\Client;
+
+                        $woocommerce = new Client(
+                            'https://mammamia.mimlab.ch',
+                            'ck_99b4d2a4d51cad847b882430b5406619528b8922',
+                            'cs_ce509e4cb542d9dbfcba19c538961df957780290',
+                            [
+                                'wp_api' => true,
+                                'version' => 'wc/v3'
+                            ]
+                        );
+
+                        $args = array(
+                            'post_type' => 'Loyverse_Item',
+							'post_status' => 'publish'
+                          );
+
+                        $loyverseposts = get_posts( $args);
+
+                        $prod_data = [
+                            'name'          => 'A great product',
+                            'type'          => 'simple',
+                            'regular_price' => '15.00',
+                            'sku' => '1000',
+                            'description'   => 'A very meaningful product description',
+                            'categories'    => [
+                                [
+                                    'id' => 17,
+                                ],
+                            ],
+                        ];
+                        
+                        /**$woocommerce->post( 'products', $prod_data );*/
+
+                        echo '<pre>';
+                        print_r("Woocommerce Products");
+                        echo '</br>';
+                        print_r($loyverseposts);
+                       /** print_r($woocommerce->get('products'));  */
+                        echo '</pre>';
+                        echo '</br>';
 
                     ?>
                 </main>
