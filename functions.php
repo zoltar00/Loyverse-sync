@@ -411,6 +411,7 @@ function get_items_from_loyverse(){
 							update_field('field_60dcd93b25b71',$variants['sku'], $inserted_item);
 							update_field('field_60e5e9af1e83f',$variants['option1_value'],$inserted_item);
 							update_field('field_60dcd94325b72',$price, $inserted_item);
+							update_field('field_60ea31a3a1da6',$item['category_id'], $inserted_item);
 
 							/** Create stuff for woocommerce product */
 							$prod_data = [
@@ -432,12 +433,31 @@ function get_items_from_loyverse(){
 				}
 		}	
 	}
-/**	
-*	wp_remote_post( admin_url('admin-ajax.php?action=get_items_from_loyverse'),[
 
-*		'blocking' =>false,
-*		'sslverify' => false
+	/** Retreive categories */
+		
+	/** Connect to Loyverse */
+		$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
+		$responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories', array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $token
+			),
+		)));
+		$data = json_decode($responsecategories,true);
+		
+		$loyverse_categories[] = $data;
+		foreach($loyverse_categories[0] as $loyverse_category){
+			
+			foreach($loyverse_category as $category){
+	
+				$loyverse_item_slug = $category['name'];
 
-*	]);
-	*/
+				/** Create stuff for woocommerce product */
+				$prod_data = [
+					'name' => $loyverse_item_slug
+				];
+				$woocommerce->post( 'products/categories', $prod_data );
+			}
+		
+		}
 }
