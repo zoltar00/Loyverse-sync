@@ -326,6 +326,62 @@ function register_loyverse_items(){
 		'capability_type' => 'post'
 	]);
 }
+ /** Functions addins */
+ add_action('wp_ajax_nopriv_get_modifiers_from_loyverse','get_modifiers_from_loyverse');
+ add_action('wp_ajax_get_modifiers_from_loyverse','get_modifiers_from_loyverse');
+
+ function get_modifiers_from_loyverse(){
+	/**Connect to WooCommerce */
+
+	$woocommerce = new Client(
+		'https://mammamia.mimlab.ch',
+		'ck_99b4d2a4d51cad847b882430b5406619528b8922',
+		'cs_ce509e4cb542d9dbfcba19c538961df957780290',
+		[
+			'wp_api' => true,
+			'version' => 'wc/v3'
+		]
+	);
+
+
+	/** Connect to Loyverse */
+	$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
+	$response = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/modifiers', array(
+		'headers' => array(
+			'Authorization' => 'Bearer ' . $token
+		),
+	)));
+
+	$data = json_decode($response,true);
+
+	if( ! is_array($data) || empty($data)){
+
+		return false;
+		error_log ("Not an Array!");
+	}
+
+	$loyverse_modifiers[] = $data;
+
+	foreach($loyverse_modifiers[0] as $loyverse_modifier){
+
+		foreach($loyverse_modifier as $modifier){
+                    
+			$loyverse_modifier_slug = sanitize_title($modifier['name']);
+
+			/** Create stuff for woocommerce product */
+			$prod_data = [
+				'name'          => $modifier['name'],
+				'slug'          => $loyverse_modifier_slug
+			];
+
+			/**Send to WooCommerce */
+			$woocommerce->post( 'products/attributes', $prod_data );	
+			
+		}
+	}
+
+
+ }
 
 add_action('wp_ajax_nopriv_get_items_from_loyverse','get_items_from_loyverse');
 add_action('wp_ajax_get_items_from_loyverse','get_items_from_loyverse');
@@ -375,7 +431,6 @@ function get_items_from_loyverse(){
 	$loyverse_items[] = $data;
 
 	foreach($loyverse_items[0] as $loyverse_item){
-
 
 		foreach($loyverse_item as $item){
 

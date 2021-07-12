@@ -21,33 +21,61 @@ get_header(); ?>
                     <?php 
                     	/** Connect to Loyverse */
                         $token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
-                        $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories', array(
+                        $response = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/modifiers', array(
                             'headers' => array(
                                 'Authorization' => 'Bearer ' . $token
                             ),
                         )));
-                        $data = json_decode($responsecategories,true);
+                        $data = json_decode($response,true);
                         
-                        $loyverse_categories[] = $data;
+                        $loyverse_modifiers[] = $data;
 
-                        echo 'Hello World!';
-                        $data = json_decode($responsecategories,true);
-		
-                        $loyverse_categories[] = $data;
-                        foreach($loyverse_categories[0] as $loyverse_category){
+                        //echo 'Hello World!';
+                        		
+                    foreach($loyverse_modifiers[0] as $loyverse_modifier){
                             
                             echo '<pre>';
-                            print_r("Loyverse categories");
+                           print_r("Loyverse modifiers");
                             echo '</br>';
-                            print_r($loyverse_category);
+                            print_r($loyverse_modifier);
                            /**print_r($woocommerce->get('products/categories'));*/
                             echo '</pre>';
                             echo '</br>';
 
-                            foreach($loyverse_category as $category){
+                            foreach($loyverse_modifier as $modifier){
                     
-                                $loyverse_item_slug = sanitize_title($category['name']);
-                      
+                                $loyverse_modifier_slug = sanitize_title($modifier['name']);
+                                foreach($modifier['modifier_options'] as $modifier_option){
+
+                                    echo '<pre>';
+                                    print_r("Loyverse Modifier options");
+                                    echo '</br>';
+                                    print_r($modifier_option['name']);
+                                    echo '</br>';
+                                    print_r($modifier_option['price']);
+                                    echo '</br>';
+                                   /**print_r($woocommerce->get('products/categories'));*/
+                                    echo '</pre>';
+                                    echo '</br>';
+
+
+
+                                }
+
+                                $attributes = get_page_by_path( $loyverse_modifier_slug, OBJECT, 'attributes' );
+                                if ( ! empty( $attributes ) ) {
+                                    $attribute = wc_get_product( $attributes );
+                                
+                                    echo '<pre>';
+                                    print_r("Get object by slug");
+                                    echo '</br>';
+                                    print_r($attribute);
+                                }
+                            }
+                        }
+
+
+
                         /** Authorization to Woocommerce 
                         *$autoloader = dirname( __FILE__ ) . '/vendor/autoload.php';
                         *if ( is_readable( $autoloader ) ) {
@@ -87,16 +115,7 @@ get_header(); ?>
                         *];*/
                         
                         /**$woocommerce->post( 'products', $prod_data );*/
-
-                        echo '<pre>';
-                        print_r("Loyverse Categories slug");
-                        echo '</br>';
-                        print_r($loyverse_item_slug);
-                       /**print_r($woocommerce->get('products/categories'));*/
-                        echo '</pre>';
-                        echo '</br>';
-                        }
-                    }
+                    
                     ?>
                 </main>
             </div>
