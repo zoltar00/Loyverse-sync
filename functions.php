@@ -515,4 +515,50 @@ function get_items_from_loyverse(){
 			}
 		
 		}
+
+	/** Retreive modifiers */
+
+	/** Connect to Loyverse */
+	$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
+	$responsemodifiers = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/modifiers', array(
+		'headers' => array(
+			'Authorization' => 'Bearer ' . $token
+		),
+	)));
+	$data = json_decode($responsemodifiers,true);
+	
+	$loyverse_modifiers[] = $data;
+	foreach($loyverse_modifiers[0] as $loyverse_modifier){
+		
+		foreach($loyverse_modifier as $modifier){
+
+			$loyverse_modifier_slug = sanitize_title($modifier['name']);
+
+			/** Create attribute for woocommerce product */
+			$prod_data = [
+				'name' => $modifier['name']
+			];
+			$woocommerce->post( 'products/attributes', $prod_data );
+
+
+			foreach($modifier['modifier_options'] as $modifier_option){
+
+				$attribute_name = $loyverse_modifier_slug;
+
+				$terms = wc_get_attribute_taxonomies($modifier['name']);
+
+				if(!empty($terms))
+					{
+						$prod_data = [
+							'name' => $modifier_option['name']
+						];
+						$url = 'products/attributes/' . $terms['attribute_id'] .'/terms';
+						$woocommerce->post( $url, $prod_data );
+
+					}            
+			}	
+		}
+	
+	}
+	
 }

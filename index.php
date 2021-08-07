@@ -45,34 +45,56 @@ get_header(); ?>
                             foreach($loyverse_modifier as $modifier){
                     
                                 $loyverse_modifier_slug = sanitize_title($modifier['name']);
+
+                                echo '<pre>';
+                                print_r($loyverse_modifier_slug);
+                                echo '</br>';
+
                                 foreach($modifier['modifier_options'] as $modifier_option){
+/** 
+ *                                   echo '<pre>';
+ *                                   print_r("Loyverse Modifier options");
+ *                                   echo '</br>';
+ *                                   print_r($modifier_option['name']);
+ *                                   echo '</br>';
+ *                                   print_r($modifier_option['price']);
+ *                                   echo '</br>';
+ *                                  print_r($woocommerce->get('products/categories'));
+ *                                   print_r($loyverse_modifier_slug);
+ *                                  echo '</pre>';
+ *                                  echo '</br>';
+ */
+                                        $attribute_name = $loyverse_modifier_slug;
+ /**                                       echo '<pre>';
+ *                                       print_r("attribute name");
+ *                                      echo '</br>';
+ *                                     print_r($attribute_name);
+*/
+                                        $terms = wc_get_attribute_taxonomies($attribute_name);
+                                        
+                                        if(!empty($terms))
+                                        {
+                                       /**  for ( $i=0; $i < count($terms); $i++ )
+                                        *    {*/
+                                            
+                                        /** Create Term */
+                                        
 
-                                    echo '<pre>';
-                                    print_r("Loyverse Modifier options");
-                                    echo '</br>';
-                                    print_r($modifier_option['name']);
-                                    echo '</br>';
-                                    print_r($modifier_option['price']);
-                                    echo '</br>';
-                                   /**print_r($woocommerce->get('products/categories'));*/
-                                    echo '</pre>';
-                                    echo '</br>';
+                                        
+                                                echo '<pre>';
+                                                print_r("Get object by slug");
+                                                echo '</br>';
+                                                print_r($terms['']);
 
+                                                                                            
+                                         /**   }*/
+                                        
+                                        }                                  
+                                    
 
-
-                                }
-
-                                $attributes = get_page_by_path( $loyverse_modifier_slug, OBJECT, 'attributes' );
-                                if ( ! empty( $attributes ) ) {
-                                    $attribute = wc_get_product( $attributes );
-                                
-                                    echo '<pre>';
-                                    print_r("Get object by slug");
-                                    echo '</br>';
-                                    print_r($attribute);
                                 }
                             }
-                        }
+                    }
 
 
 
