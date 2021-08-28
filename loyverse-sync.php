@@ -125,7 +125,10 @@ function loyverse_sync(){
      }
  
  }    
-    echo "Connecting to Loyverse API...";
+ echo "Getting items from Loyverse...";
+ echo '<pre>';
+ echo '</br>';   
+ echo "Connecting to Loyverse API...";
 
 	/** Connect to Loyverse */
 	$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
@@ -148,12 +151,39 @@ function loyverse_sync(){
 		error_log ("Not an Array!");
 	}
 
-	$loyverse_items[] = $data;
+	$loyverse_items[] = $data; 
 
    $msg="Got all Items...";
    echo '<pre>'; 
    print_r($msg);
    echo '</br>'; 
+
+   foreach ($loyverse_items[0] as $loyverse_item) {
+
+    for ($i=0;$i < count($loyverse_item); $i++) {
+            
+         $loyverse_item_slug = sanitize_title($loyverse_item['item_name']); 
+            /** check if product exists */
+            $woocommerce_all_products = $woocommerce->get('products');
+
+            /** Create stuff for woocommerce product */
+             $prod_data = [
+                    'name'          => $loyverse_item_slug,
+                    'type'          => 'variable',
+                    'description'   => $loyverse_item_slug
+               ];
+
+               $msg = "Sending item ". $loyverse_item_slug ." to woocommerce...";
+               echo $msg;
+               echo '<pre>'; 
+               print_r($msg);
+               echo '</br>'; 
+
+               /**Send to WooCommerce */
+                $woocommerce->post( 'products', $prod_data );
+   }
+}
+
 /**
 *	foreach($loyverse_items[0] as $loyverse_item){
 
