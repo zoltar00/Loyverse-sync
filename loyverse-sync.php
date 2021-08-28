@@ -17,6 +17,7 @@ if ( is_readable( $autoloader ) ) {
 }
 
 use Automattic\WooCommerce\Client;
+use Automattic\WooCommerce\HttpClient\HttpClientException;
 
 function lvsync_create_menu() {
 
@@ -28,13 +29,19 @@ add_action('admin_menu', 'lvsync_create_menu');
 
 function loyverse_sync(){
 
-    echo "Starting sync...";
+    $msg="Starting sync...";
+    echo '<pre>'; 
+    print_r($msg);
+    echo '</br>'; 
 
 	$loyverse_items = [];
 
 	/**Connect to WooCommerce */
 
-    echo "Connecting to Woocommerce API...";
+    $msg="Connecting to Woocommerce API...";
+    echo '<pre>'; 
+    print_r($msg);
+    echo '</br>'; 
 
 	$woocommerce = new Client(
 		'https://mammamia.mimlab.ch',
@@ -42,16 +49,20 @@ function loyverse_sync(){
 		'cs_ce509e4cb542d9dbfcba19c538961df957780290',
 		[
 			'wp_api' => true,
-			'version' => 'wc/v3'
+			'version' => 'wc/v3',
+            'verify_ssl' => false
 		]
 	);
 
-   echo "Connected to Woocommerce API...";
+   $msg="Connected to Woocommerce API...";
+   echo '<pre>'; 
+   print_r($msg);
+   echo '</br>';    
 
- echo "";
-
- echo "Getting categories from Loyverse...";
- echo "";
+ $msg="Getting categories from Loyverse...";
+ echo '<pre>'; 
+ print_r($msg);
+ echo '</br>'; 
 
  /** Connect to Loyverse */
  $token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
@@ -63,21 +74,54 @@ function loyverse_sync(){
  $data = json_decode($responsecategories,true);
  
  $loyverse_categories[] = $data;
+
+
+ $all_categories = $woocommerce->get('products/categories');
+ $woocat = (array) $all_categories;
+  
  foreach($loyverse_categories[0] as $loyverse_category){
      
      foreach($loyverse_category as $category){
 
-         $loyverse_category_slug = $category['name'];
+         $loyverse_category_slug = sanitize_title($category['name']);
 
-         /** Create stuff for woocommerce product */
-         $prod_data = [
-             'name' => $loyverse_category_slug
-         ];
+         /** Check if data already in Woocommerce */
+         $found = 0;
 
-         $msg = "Sending category ". $loyverse_category_slug ." to woocommerce...";
-         echo $msg;
+         foreach($woocat as $cat){
 
-         $woocommerce->post( 'products/categories', $prod_data );
+ 
+                    if($cat->slug===$loyverse_category_slug){
+
+                    $msg = "Category ". $category['name'] ." already exists.";
+                    echo '<pre>'; 
+                    print_r($msg);
+                    echo '</br>';                      
+                    $found = $found + 1;
+
+                    break;
+            }
+
+         }
+         
+
+         if($found == 0)
+         {
+
+           /**   Create stuff for woocommerce product */
+            $prod_data = [
+               'name' => $category['name']
+            ];
+
+             $msg = "Sending category ". $category['name'] ." to woocommerce...";
+             echo '<pre>'; 
+             print_r($msg);
+             echo '</br>'; 
+
+            $woocommerce->post( 'products/categories', $prod_data );
+
+         }
+
      }
  
  }    
@@ -91,7 +135,10 @@ function loyverse_sync(){
 		),
 	)));
 
-   echo "Connected to Loyverse API...";
+   $msg="Connected to Loyverse API...";
+   echo '<pre>'; 
+   print_r($msg);
+   echo '</br>';    
 
 	$data = json_decode($response,true);
 
@@ -103,42 +150,52 @@ function loyverse_sync(){
 
 	$loyverse_items[] = $data;
 
-   echo "Got all Items...";
+   $msg="Got all Items...";
+   echo '<pre>'; 
+   print_r($msg);
+   echo '</br>'; 
+/**
+*	foreach($loyverse_items[0] as $loyverse_item){
 
-	foreach($loyverse_items[0] as $loyverse_item){
+*		foreach($loyverse_item as $item){
 
-		foreach($loyverse_item as $item){
+*			$loyverse_item_slug = sanitize_title($item['item_name']); 
 
-			$loyverse_item_slug = sanitize_title($item['item_name']); 
-
-			foreach($item['variants'] as $variants){
+*			foreach($item['variants'] as $variants){
 						
-                /** Create stuff for woocommerce product */
-            $prod_data = [
-                    'name'          => $loyverse_item_slug,
-                    'type'          => 'simple',
-                    'regular_price' => $price,
-                    'sku' => $variants['sku'],
-                    'description'   => $loyverse_item_slug,
-                    'categories'    => [
-                        [
-                            'id' => 17,
-                        ],
-                    ],
-                ];
+ *               /** Create stuff for woocommerce product */
+  /**           $prod_data = [
+  *                  'name'          => $loyverse_item_slug,
+  *                  'type'          => 'simple',
+  *                  'regular_price' => ['price'],
+  *                  'sku' => $variants['sku'],
+  *                  'description'   => $loyverse_item_slug,
+  *                  'categories'    => [
+  *                      [
+  *                          'id' => 17,
+  *                      ],
+  *                  ],
+   *             ];
 
-               $msg = "Sending item ". $loyverse_item_slug ." to woocommerce...";
-               echo $msg;
-               
-               /**Send to WooCommerce */
-                $woocommerce->post( 'products', $prod_data );
-            }
-        }
-    }
+   *            $msg = "Sending item ". $loyverse_item_slug ." to woocommerce...";
+   *            echo $msg;
+   *            echo '<pre>'; 
+   *            print_r($msg);
+   *            echo '</br>'; 
+
+   *            /**Send to WooCommerce 
+   *             $woocommerce->post( 'products', $prod_data );*/
+   /**          }
+    *    }
+    *}*/
 
 
 
-    echo "Done importing!";
+    $msg= "Done importing!";
+    echo $msg;
+    echo '<pre>'; 
+    print_r($msg);
+    echo '</br>'; 
 }
 
 ?>
