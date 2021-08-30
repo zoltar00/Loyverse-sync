@@ -158,66 +158,71 @@ function loyverse_sync(){
    print_r($msg);
    echo '</br>'; 
 
-   foreach ($loyverse_items[0] as $loyverse_item) {
+   $woocommerce_all_products = $woocommerce->get('products');
+   $wooprod = (array) $woocommerce_all_products;
 
-    for ($i=0;$i < count($loyverse_item); $i++) {
+   foreach ($data as $loyverse_item) {
+
+        foreach($loyverse_item as $item){
+
+            echo '<pre>'; 
+            print_r($item);
+            echo '</br>'; 
+
             
-         $loyverse_item_slug = sanitize_title($loyverse_item['item_name']); 
-            /** check if product exists */
-            $woocommerce_all_products = $woocommerce->get('products');
+            $loyverse_item_slug = sanitize_title($item['item_name']);     
+          
+            /** Check if data already in Woocommerce */
+            $found = 0;
 
-            /** Create stuff for woocommerce product */
-             $prod_data = [
-                    'name'          => $loyverse_item_slug,
-                    'type'          => 'variable',
-                    'description'   => $loyverse_item_slug
-               ];
+            foreach($wooprod as $prod){
 
-               $msg = "Sending item ". $loyverse_item_slug ." to woocommerce...";
-               echo $msg;
-               echo '<pre>'; 
-               print_r($msg);
-               echo '</br>'; 
+ 
+                    if($prod->slug===$loyverse_item_slug){
 
-               /**Send to WooCommerce */
-                $woocommerce->post( 'products', $prod_data );
-   }
-}
+                        $msg = "Product ". $item['item_name'] ." already exists.";
+                        echo '<pre>'; 
+                        print_r($msg);
+                        echo '</br>';                      
 
-/**
-*	foreach($loyverse_items[0] as $loyverse_item){
+                    }
+                    else{
+                        /** Create stuff for woocommerce product */
+                        $prod_data = [
+                            'name'          => $loyverse_item_slug,
+                            'type'          => 'variable',
+                            'description'   => $loyverse_item_slug
+                        ];
 
-*		foreach($loyverse_item as $item){
+                        $msg = "Sending item ". $loyverse_item_slug ." to woocommerce...";
+                        echo '<pre>'; 
+                        print_r($msg);
+                        echo '</br>'; 
 
-*			$loyverse_item_slug = sanitize_title($item['item_name']); 
+                        /**Send to WooCommerce */
+                            $woocommerce->post( 'products', $prod_data );
+                        
+                        /** Update product with info */
+                        foreach($item['variant'] as $variant){
 
-*			foreach($item['variants'] as $variants){
-						
- *               /** Create stuff for woocommerce product */
-  /**           $prod_data = [
-  *                  'name'          => $loyverse_item_slug,
-  *                  'type'          => 'simple',
-  *                  'regular_price' => ['price'],
-  *                  'sku' => $variants['sku'],
-  *                  'description'   => $loyverse_item_slug,
-  *                  'categories'    => [
-  *                      [
-  *                          'id' => 17,
-  *                      ],
-  *                  ],
-   *             ];
+                            echo '<pre>'; 
+                            print_r('SKU: ');
+                            echo '</br>';
+                            echo '<pre>'; 
+                            print_r($variant['sku']);
+                            echo '</br>';  
 
-   *            $msg = "Sending item ". $loyverse_item_slug ." to woocommerce...";
-   *            echo $msg;
-   *            echo '<pre>'; 
-   *            print_r($msg);
-   *            echo '</br>'; 
 
-   *            /**Send to WooCommerce 
-   *             $woocommerce->post( 'products', $prod_data );*/
-   /**          }
-    *    }
-    *}*/
+                        }
+
+
+                    }
+
+            }          
+            
+        }
+    }
+
 
 
 
