@@ -26,7 +26,6 @@ function lvsync_create_menu() {
 
 add_action('admin_menu', 'lvsync_create_menu');
 
-
 function loyverse_sync(){
 
     $msg="Starting sync...";
@@ -64,7 +63,10 @@ function loyverse_sync(){
  print_r($msg);
  echo '</br>'; 
 
+ 
  /** Connect to Loyverse */
+  
+
  $token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
  $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories', array(
      'headers' => array(
@@ -73,7 +75,8 @@ function loyverse_sync(){
  )));
  $data = json_decode($responsecategories,true);
  
- $loyverse_categories[] = $data;
+ 
+$loyverse_categories[] = $data;
 
 
  $all_categories = $woocommerce->get('products/categories');
@@ -84,8 +87,11 @@ function loyverse_sync(){
      foreach($loyverse_category as $category){
 
          $loyverse_category_slug = sanitize_title($category['name']);
+         /** Get category iD */
 
-         /** Check if data already in Woocommerce */
+         $lvcatid = $category['id'];
+
+          /** Check if data already in Woocommerce */
          $found = 0;
 
          foreach($woocat as $cat){
@@ -138,12 +144,21 @@ function loyverse_sync(){
 		),
 	)));
 
+    $cat_url = 'https://api.loyverse.com/v1.0/categories/'.$lvcatid;
+
+    $responsecat = wp_remote_retrieve_body(wp_remote_get($cat_url, array(
+		'headers' => array(
+			'Authorization' => 'Bearer ' . $token
+		),
+	)));
+   
    $msg="Connected to Loyverse API...";
    echo '<pre>'; 
    print_r($msg);
    echo '</br>';    
 
 	$data = json_decode($response,true);
+    $datacat = json_decode($responsecat,true);
 
 	if( ! is_array($data) || empty($data)){
 
@@ -151,7 +166,33 @@ function loyverse_sync(){
 		error_log ("Not an Array!");
 	}
 
-	$loyverse_items[] = $data; 
+	$loyverse_items[] = $data;
+    $loyverse_cat[] = $datacat; 
+
+    $loyverse_slug = sanitize_title($datacat['name']);
+    
+   
+    /** Get Woocommerce category from loyverse category */
+
+    $woocommerce_all_categories = $woocommerce->get('products/categories');
+    $woocommerce_cats = (array)$woocommerce_all_categories;
+
+    foreach($woocommerce_cats as $wccats){
+
+        $found = 0;
+
+        if($wccats->slug===$loyverse_slug){
+           
+           $wcid=$wccats->id;
+           $found = $found + 1;
+
+            break;
+
+        }
+
+
+
+    }
 
    $msg="Got all Items...";
    echo '<pre>'; 
@@ -161,76 +202,64 @@ function loyverse_sync(){
    $woocommerce_all_products = $woocommerce->get('products');
    $wooprod = (array) $woocommerce_all_products;
 
-   foreach ($data as $loyverse_item) {
+   foreach ($loyverse_items[0] as $loyverse_item) {
 
         foreach($loyverse_item as $item){
 
-            echo '<pre>'; 
-            print_r($item);
-            echo '</br>'; 
-
-            
-            $loyverse_item_slug = sanitize_title($item['item_name']);     
-          
-            /** Check if data already in Woocommerce */
+            $loyverse_item_slug = sanitize_title($item['item_name']);
+            $variant_sku = $item['variants'][0]['sku'];
+ 
+              /** Check if data already in Woocommerce */
             $found = 0;
 
             foreach($wooprod as $prod){
 
- 
-                    if($prod->slug===$loyverse_item_slug){
+                     if($prod->name===$loyverse_item_slug){
 
                         $msg = "Product ". $item['item_name'] ." already exists.";
                         echo '<pre>'; 
                         print_r($msg);
-                        echo '</br>';                      
+                        echo '</br>';
+                        $found = $found + 1;
+
+                        break;                      
 
                     }
-                    else{
+            }
+                    if($found == 0){
                         /** Create stuff for woocommerce product */
                         $prod_data = [
                             'name'          => $loyverse_item_slug,
                             'type'          => 'variable',
-                            'description'   => $loyverse_item_slug
+                            'description'   => $loyverse_item_slug,
+                            'sku' => $variant_sku,
+                            'categories' =>[
+                                [
+                                'id' => $wcid
+                                    
+                                ]
+                            ]
+                            
                         ];
 
                         $msg = "Sending item ". $loyverse_item_slug ." to woocommerce...";
                         echo '<pre>'; 
                         print_r($msg);
                         echo '</br>'; 
-
+                        
+            
                         /**Send to WooCommerce */
                             $woocommerce->post( 'products', $prod_data );
-                        
-                        /** Update product with info */
-                        foreach($item['variant'] as $variant){
-
-                            echo '<pre>'; 
-                            print_r('SKU: ');
-                            echo '</br>';
-                            echo '<pre>'; 
-                            print_r($variant['sku']);
-                            echo '</br>';  
-
-
-                        }
-
 
                     }
 
-            }          
-            
         }
     }
 
-
-
-
-    $msg= "Done importing!";
-    echo $msg;
-    echo '<pre>'; 
-    print_r($msg);
-    echo '</br>'; 
+$msg= "Done importing!";
+echo '<pre>'; 
+print_r($msg);
+echo '</br>'; 
 }
 
 ?>
