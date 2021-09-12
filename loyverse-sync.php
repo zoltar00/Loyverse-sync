@@ -26,6 +26,53 @@ function lvsync_create_menu() {
 
 add_action('admin_menu', 'lvsync_create_menu');
 
+$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
+
+function loyverse_categories_connection(){
+
+  
+    $msg="Getting categories from Loyverse...";
+    echo '<pre>'; 
+    print_r($msg);
+    echo '</br>'; 
+
+    global $token;
+    $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories', array(
+        'headers' => array(
+            'Authorization' => 'Bearer ' . $token
+        ),
+    )));
+    $data = json_decode($responsecategories,true);
+
+    return $data;
+    
+}
+
+function loyverse_items_connection(){
+
+    echo "Getting items from Loyverse...";
+    echo '<pre>';
+    echo '</br>';   
+    echo "Connecting to Loyverse API...";
+   
+       /** Connect to Loyverse */
+       global $token;
+       $resp = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items', array(
+           'headers' => array(
+               'Authorization' => 'Bearer ' . $token
+           ),
+       )));
+
+       $msg="Connected to Loyverse API...";
+       echo '<pre>'; 
+       print_r($msg);
+       echo '</br>';    
+
+       return $resp;
+
+}
+
+
 function loyverse_sync(){
 
     $msg="Starting sync...";
@@ -53,30 +100,17 @@ function loyverse_sync(){
 		]
 	);
 
-   $msg="Connected to Woocommerce API...";
-   echo '<pre>'; 
-   print_r($msg);
-   echo '</br>';    
+    $msg="Connected to Woocommerce API...";
+    echo '<pre>'; 
+    print_r($msg);
+    echo '</br>';  
 
- $msg="Getting categories from Loyverse...";
- echo '<pre>'; 
- print_r($msg);
- echo '</br>'; 
 
- 
  /** Connect to Loyverse */
   
 
- $token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
- $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories', array(
-     'headers' => array(
-         'Authorization' => 'Bearer ' . $token
-     ),
- )));
- $data = json_decode($responsecategories,true);
- 
- 
-$loyverse_categories[] = $data;
+ $loyverse_categories[] = loyverse_categories_connection();
+
 
 
  $all_categories = $woocommerce->get('products/categories');
@@ -131,18 +165,10 @@ $loyverse_categories[] = $data;
      }
  
  }    
- echo "Getting items from Loyverse...";
- echo '<pre>';
- echo '</br>';   
- echo "Connecting to Loyverse API...";
 
-	/** Connect to Loyverse */
-	$token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
-	$response = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items', array(
-		'headers' => array(
-			'Authorization' => 'Bearer ' . $token
-		),
-	)));
+ /** Connect to loyverse */
+
+ $response = loyverse_items_connection();
 
     $cat_url = 'https://api.loyverse.com/v1.0/categories/'.$lvcatid;
 
@@ -151,11 +177,7 @@ $loyverse_categories[] = $data;
 			'Authorization' => 'Bearer ' . $token
 		),
 	)));
-   
-   $msg="Connected to Loyverse API...";
-   echo '<pre>'; 
-   print_r($msg);
-   echo '</br>';    
+  
 
 	$data = json_decode($response,true);
     $datacat = json_decode($responsecat,true);
@@ -207,6 +229,7 @@ $loyverse_categories[] = $data;
         foreach($loyverse_item as $item){
 
             $loyverse_item_slug = sanitize_title($item['item_name']);
+            $loyverse_item_img_url = $item['image_url'];
             $variant_sku = $item['variants'][0]['sku'];
  
               /** Check if data already in Woocommerce */
@@ -238,7 +261,8 @@ $loyverse_categories[] = $data;
                                 'id' => $wcid
                                     
                                 ]
-                            ]
+                                
+                                ]
                             
                         ];
 
@@ -255,6 +279,8 @@ $loyverse_categories[] = $data;
 
         }
     }
+
+ /**upload_image('https://api.loyverse.com/image/73804bed-0733-4701-9a06-55a8a613bb7b');*/
 
 $msg= "Done importing!";
 echo '<pre>'; 
