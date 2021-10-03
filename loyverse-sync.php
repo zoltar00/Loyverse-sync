@@ -260,7 +260,17 @@ function loyverse_sync(){
                                     
                                 ]
                                 
-                                ]
+                                ],
+                            'meta_data' => [
+                                    [
+                                        'key'=> '_knawatfibu_url',
+                                        'value'=> [
+                                            'img_url' => $loyverse_item_img_url,
+                                            'width'=> '500',
+                                            'height'=> '500'
+                                        ]
+                                    ]
+                            ]
                             
                         ];
 
