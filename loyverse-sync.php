@@ -35,11 +35,29 @@ Class LoyverseSyncPlugin {
         add_settings_field('lvs_lvtoken','Loyverse API Token',array($this,'loyverseTokenHTML'),'loyverse-sync-settings-page','lsp_first_section');
         register_setting('loyversesyncplugin','lvs_lvtoken',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse API Token'));
 
+        add_settings_field('lvs_wckey','Woocommerce API Key',array($this,'WoocommerceTokenHTML'),'loyverse-sync-settings-page','lsp_first_section');
+        register_setting('loyversesyncplugin','lvs_wckey',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Key'));
+
+        add_settings_field('lvs_wcsecret','Woocommerce API Secret',array($this,'WoocommerceSecretHTML'),'loyverse-sync-settings-page','lsp_first_section');
+        register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Secret'));        
+
     }
 
     function loyverseTokenHTML(){ ?>
 
         <input type="text" name="lvs_lvtoken" value="<?php echo esc_attr(get_option('lvs_lvtoken')) ?>"></input>
+
+    <?php }
+
+    function WoocommerceTokenHTML(){ ?>
+
+        <input type="text" name="lvs_wckey" value="<?php echo esc_attr(get_option('lvs_wckey')) ?>"></input>
+
+    <?php }
+
+    function WoocommerceSecretHTML(){ ?>
+
+        <input type="text" name="lvs_wcsecret" value="<?php echo esc_attr(get_option('lvs_wcsecret')) ?>"></input>
 
     <?php }
 
