@@ -19,15 +19,67 @@ if ( is_readable( $autoloader ) ) {
 use Automattic\WooCommerce\Client;
 use Automattic\WooCommerce\HttpClient\HttpClientException;
 
+Class LoyverseSyncPlugin {
+
+    function __construct(){
+
+        add_action('admin_menu', array($this,'adminPage'));
+        add_action( 'admin_init', array($this,'settings'));
+
+    }
+
+    function settings(){
+
+        add_settings_section('lsp_first_section',null,null,'loyverse-sync-settings-page');
+        
+        add_settings_field('lvs_lvtoken','Loyverse API Token',array($this,'loyverseTokenHTML'),'loyverse-sync-settings-page','lsp_first_section');
+        register_setting('loyversesyncplugin','lvs_lvtoken',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse API Token'));
+
+    }
+
+    function loyverseTokenHTML(){ ?>
+
+        <input type="text" name="lvs_lvtoken" value="<?php echo esc_attr(get_option('lvs_lvtoken')) ?>"></input>
+
+    <?php }
+
+    function adminPage(){
+
+        add_options_page('Loyverse Sync Settings','Loyverse Settings','manage_options','loyverse-sync-settings-page',array($this,'ourHTML'));
+    
+    }
+    
+    function ourHTML(){ ?>
+    
+        <div class ="wrap">
+            <h1>Loyverse Sync Settings</h1>
+            <form action="options.php" method="POST">
+                <?php
+                    settings_fields('loyversesyncplugin');
+                    do_settings_sections('loyverse-sync-settings-page');
+                    submit_button();
+                ?>
+
+            </form>
+    </div>
+    
+    <?php }
+
+}
+
+$loyverseSyncPlugin = new LoyverseSyncPlugin();
+
+add_action('admin_menu', 'lvsync_create_menu');
+
+
 function lvsync_create_menu() {
 
     add_management_page('Loyverse sync', 'Loyverse sync', 'manage_options', 'loyverse-sync', 'loyverse_sync');
 }
 
-add_action('admin_menu', 'lvsync_create_menu');
+
 
 $token = '8a9f63253d6c41e294e8f67d8ebcadea'; 
-$lvcatid = array();
 
 function loyverse_categories_connection(){
 
