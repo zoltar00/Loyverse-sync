@@ -144,6 +144,7 @@ function get_loyverse_category_by_id($catid){
 
 function loyverse_sync(){ ?>
     
+    
 
     <div class ="wrap">
         <h1>Loyverse Synchronization</h1>
@@ -152,6 +153,7 @@ function loyverse_sync(){ ?>
     </div>
 
     <?php
+  
     global $wpdb;
 	$loyverse_items = [];
 
@@ -180,30 +182,41 @@ function loyverse_sync(){ ?>
 
     $loyverse_categories[] = $this->loyverse_categories_connection();
 
-    /** Get all categories from Woocommerce */
+    /** Get all categories from Woocommerce 
     
-    $all_categories = $woocommerce->get('products/categories');
-    $woocat = (array) $all_categories;
+    * $all_categories = $woocommerce->get('products/categories');
+    * $woocat = (array) $all_categories;*/
     
     foreach($loyverse_categories[0] as $loyverse_category){
         
         foreach($loyverse_category as $category){
 
-            $loyverse_category_slug = sanitize_title($category['name']);
+            $loyverse_category_id = $category['id'];
             
-            /** Check if data already in Woocommerce */
+            /** Get data from database */
+            
+            $queryresults = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
+
+           /* print_r($queryresults);
+            break; */
             $found = 0;
-
-            foreach($woocat as $cat){
-
-    
-                        if($cat->slug===$loyverse_category_slug){
+ 
+            foreach($queryresults as $qres){ 
+               
+                if($qres->lv_id===$loyverse_category_id){ 
+                
+                    
 
                             $prod_data = [
                                 'name' => $category['name']
                                 ];
-                            $url = 'products/categories/'.$cat->id;
+                            $db_data = [
+                                'lv_name' => $category['name']
+                                ];
+                            $url = 'products/categories/'.$qres->wc_id;
                             $woocommerce->put( $url, $prod_data );
+
+                            $wpdb->update( 'wp_lv_sync' , $db_data, array( 'lv_id' => $category['id'] ));
 
                         ?>        
                             <pre> Category <?php echo $category['name'] ?> updated. </pre>
@@ -213,7 +226,7 @@ function loyverse_sync(){ ?>
                         $found = $found + 1;
 
                         break;
-                }
+                 }
 
             }
             
@@ -240,7 +253,7 @@ function loyverse_sync(){ ?>
                 );
 
                 /* Insert into database wp_lv_sync */
-                    $table_name = 'wp_lv_sync';
+                $table_name = 'wp_lv_sync';
 
                     $result = $wpdb->insert($table_name,$data, $format=NULL);
 
