@@ -122,10 +122,6 @@ function get_loyverse_category_by_id($catid){
 
         /** Connect to loyverse */
 
-        ?>        
-            <pre> Getting loyverse category information for <?php echo $catid ?> ... </pre>
-        <?php  
-
         $cat_url = 'https://api.loyverse.com/v1.0/categories/'.$catid;
 
         $responsecat = wp_remote_retrieve_body(wp_remote_get($cat_url, array(
@@ -234,7 +230,7 @@ function loyverse_sync(){ ?>
             if($found == 0)
             {
 
-            /**   Create stuff for woocommerce product */
+            /**   Create stuff for woocommerce category */
                 $prod_data = [
                 'name' => $category['name']
                 ];
@@ -275,20 +271,21 @@ function loyverse_sync(){ ?>
     
     }    
 
+        /* Sync Products from Loyverses */
+
             $loyverse_items[] = $this ->loyverse_items_connection();/** Get items from Loyverse */
 
         ?>        
             <pre> Got all Items... </pre>
         <?php   
 
-        $woocommerce_all_products = $woocommerce->get('products');
-        $wooprod = (array) $woocommerce_all_products;
+
 
         foreach ($loyverse_items[0] as $loyverse_item) {
 
                 foreach($loyverse_item as $item){
 
-
+                    $loyverse_item_id = $item['id'];
                     $loyverse_item_slug = sanitize_title($item['item_name']);
                     $loyverse_item_name = $item['item_name'];
                     $loyverse_item_img_url = $item['image_url'];
@@ -297,18 +294,22 @@ function loyverse_sync(){ ?>
                     $loyverse_catname = $this->get_loyverse_category_by_id($item['category_id']); 
                     $loyverse_category_slug = sanitize_title($loyverse_catname);
 
-                    /** Get Woocommerce category id from loyverse category */
-
-                    $woocommerce_all_categories = $woocommerce->get('products/categories');
+                    /** Get Woocommerce category id from loyverse category. Get from Dataabase */
+                    $queryresults = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
+                    
+                   /* $woocommerce_all_categories = $woocommerce->get('products/categories');
                     $woocommerce_cats = (array)$woocommerce_all_categories;
 
-                    foreach($woocommerce_cats as $wccats){
+                    foreach($woocommerce_cats as $wccats){*/
+                       
+                    foreach($queryresults as $qres){ 
+                    
 
                     $found = 0;
 
-                        if($wccats->slug===$loyverse_category_slug){
+                    if($qres->lv_id===$item['category_id']){
                         
-                        $wcid=$wccats->id;
+                        $wcid=$qres->wc_id;
 
                         $found = $found + 1;
 
@@ -320,6 +321,9 @@ function loyverse_sync(){ ?>
 
                     /** Check if data already in Woocommerce */
                     $found = 0;
+
+                  /*  $woocommerce_all_products = $woocommerce->get('products');
+                    $wooprod = (array) $woocommerce_all_products;                    
 
                     foreach($wooprod as $prod){
 
@@ -334,7 +338,59 @@ function loyverse_sync(){ ?>
                                 break;                      
 
                             }
+                    }*/
+
+                    foreach($queryresults as $qres){ 
+               
+                        if($qres->lv_id===$loyverse_item_id){ 
+
+                            $prod_data = [
+                                'name'          => $loyverse_item_name,
+                                'type'          => 'simple',
+                                'description'   => $loyverse_item_slug,
+                                'regular_price' => strval($loyverse_item_price),
+                                'sku' => $variant_sku,
+                                'categories' =>[
+                                    [
+                                    'id' => (integer)$wcid
+                                        
+                                    ]
+                                    
+                                    ],
+                                'meta_data' => [
+                                        [
+                                            'key'=> '_knawatfibu_url',
+                                            'value'=> [
+                                                'img_url' => $loyverse_item_img_url,
+                                                'width'=> '500',
+                                                'height'=> '500'
+                                            ]
+                                        ]
+                                ]
+                                
+                            ];
+
+                            $db_data = [
+                                'lv_name' => $loyverse_item_name
+                                ];
+                            $url = 'products/'.$qres->wc_id;
+                            $woocommerce->put( $url, $prod_data );
+
+                            $wpdb->update( 'wp_lv_sync' , $db_data, array( 'lv_id' => $loyverse_item_id));
+
+                        ?>        
+                            <pre> Item <?php echo $loyverse_item_name ?> updated. </pre>
+                        <?php     
+
+                        $found = $found + 1;
+
+                        break;
+
+                        }
+                    
                     }
+
+
                             if($found == 0){
                                 /** Create stuff for woocommerce product */
                                 $prod_data = [
@@ -369,7 +425,30 @@ function loyverse_sync(){ ?>
                                 
                     
                                 /**Send to WooCommerce */
-                                    $woocommerce->post( 'products', $prod_data );
+                                $woocommerce->post( 'products', $prod_data );
+                                (array) $theitem = $woocommerce->get('products',['search' => $loyverse_item_slug]);
+
+                                /* Insert into database wp_lv_sync */
+                                $table_name = 'wp_lv_sync';
+
+                                $db_data = array(
+                                    'lv_id' => $loyverse_item_id,
+                                    'lv_name' => $loyverse_item_name,
+                                    'wc_id' => $theitem[0] ->id
+                                );
+
+                                $result = $wpdb->insert($table_name,$db_data, $format=NULL);
+
+                                if($result==1){ ?>
+
+                                    <pre> Saved item <?php echo $loyverse_item_name ?> to the database... </pre>
+
+                                <?php }
+                                else{ ?>
+                                    
+                                    <pre> Unable to save item <?php echo $loyverse_item_name?> to the database... </pre>
+
+                                <?php }    
 
                             }
 
