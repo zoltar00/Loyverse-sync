@@ -138,6 +138,16 @@ function get_loyverse_category_by_id($catid){
 
 }
 
+function loyverse_delete_objects(){
+
+    ?>
+
+    <pre> Hello World for the deletion! </pre>
+
+    <?php
+
+}
+
 function loyverse_sync(){ ?>
     
     
@@ -178,10 +188,7 @@ function loyverse_sync(){ ?>
 
     $loyverse_categories[] = $this->loyverse_categories_connection();
 
-    /** Get all categories from Woocommerce 
-    
-    * $all_categories = $woocommerce->get('products/categories');
-    * $woocat = (array) $all_categories;*/
+    /** Get all categories from Woocommerce */
     
     foreach($loyverse_categories[0] as $loyverse_category){
         
@@ -193,16 +200,12 @@ function loyverse_sync(){ ?>
             
             $queryresults = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
 
-           /* print_r($queryresults);
-            break; */
             $found = 0;
  
             foreach($queryresults as $qres){ 
                
                 if($qres->lv_id===$loyverse_category_id){ 
                 
-                    
-
                             $prod_data = [
                                 'name' => $category['name']
                                 ];
@@ -433,7 +436,8 @@ function loyverse_sync(){ ?>
                 }
             }
 
-            ?>        
+            ?>   
+                <pre> Deleting categories and items that are no longer in Loyverse</pre>  <?php $this ->loyverse_delete_objects(); ?>     
                 <pre> Done importing!</pre>
             <?php   
         }
