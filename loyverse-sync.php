@@ -297,11 +297,7 @@ function loyverse_sync(){ ?>
                     /** Get Woocommerce category id from loyverse category. Get from Dataabase */
                     $queryresults = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
                     
-                   /* $woocommerce_all_categories = $woocommerce->get('products/categories');
-                    $woocommerce_cats = (array)$woocommerce_all_categories;
-
-                    foreach($woocommerce_cats as $wccats){*/
-                       
+                      
                     foreach($queryresults as $qres){ 
                     
 
@@ -321,24 +317,6 @@ function loyverse_sync(){ ?>
 
                     /** Check if data already in Woocommerce */
                     $found = 0;
-
-                  /*  $woocommerce_all_products = $woocommerce->get('products');
-                    $wooprod = (array) $woocommerce_all_products;                    
-
-                    foreach($wooprod as $prod){
-
-                            if($prod->slug===$loyverse_item_slug){
-
-                                ?>        
-                                    <pre> Product <?php echo $item['item_name'] ?> already exists.</pre>
-                                <?php   
-                                                    
-                                $found = $found + 1;
-
-                                break;                      
-
-                            }
-                    }*/
 
                     foreach($queryresults as $qres){ 
                
@@ -454,8 +432,6 @@ function loyverse_sync(){ ?>
 
                 }
             }
-
-            /**upload_image('https://api.loyverse.com/image/73804bed-0733-4701-9a06-55a8a613bb7b');*/
 
             ?>        
                 <pre> Done importing!</pre>
