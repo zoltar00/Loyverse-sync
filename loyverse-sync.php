@@ -140,11 +140,84 @@ function get_loyverse_category_by_id($catid){
 
 function loyverse_delete_objects(){
 
+    global $wpdb;
+
     ?>
 
     <pre> Hello World for the deletion! </pre>
 
     <?php
+
+    /* Get all items from Databases */
+    $databaseresults[] = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
+    $loyversecategories[] = $this->loyverse_categories_connection();
+    $loyverseItmes[] =  $this->loyverse_items_connection();
+    
+    $woocommerce = new Client(
+		'https://mammamia.mimlab.ch',
+		get_option('lvs_wckey','1'),
+		get_option('lvs_wcsecret','1'),
+		[
+			'wp_api' => true,
+			'version' => 'wc/v3',
+            'verify_ssl' => false
+		]
+	);
+
+    foreach($databaseresults[0] as $dbres){
+
+        global $lvid;
+        global $lvname;
+        global $wcid;
+        global $lvsyncid;
+
+        $lvid = $dbres->lv_id;
+        $lvname = $dbres->lv_name;
+        $wcid = $dbres->wc_id;
+        $lvsyncid = $dbres->lv_sync_id;
+
+        foreach($loyversecategories[0] as $lv_cat){
+
+            foreach($lv_cat as $category){   
+    
+                $loyverse_cat_id = $category['id'];
+
+                $found = 0;
+                if($lvid ===$loyverse_cat_id){
+
+                    ?>
+
+                    <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
+                
+                <?php  
+                $found = $found + 1 ;                 
+                break;
+                }
+
+            }
+        }
+    
+    }
+
+    if($found == 0){
+
+        ?>
+
+        <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
+    
+        <?php
+        /* Delete catagory in Woocommerce */
+        $url = 'products/categories/'.$wcid;
+        /*print_r($url);*/
+        $woocommerce->delete($url, ['force' => true]);
+        $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
+
+        ?>
+
+        <pre> Category <?php echo $lvname ?> deleted...</pre>
+    
+        <?php
+    }    
 
 }
 
