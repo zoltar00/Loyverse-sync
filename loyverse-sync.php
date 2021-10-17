@@ -23,7 +23,7 @@ use Automattic\WooCommerce\HttpClient\HttpClientException;
 
 Class LoyverseSyncPlugin {
 
-    function __construct(){
+function __construct(){
 
         add_action('admin_menu', array($this,'adminPage'));
         add_action( 'admin_init', array($this,'settings'));
@@ -31,7 +31,7 @@ Class LoyverseSyncPlugin {
 
     }
 
-    function settings(){
+function settings(){
 
         add_settings_section('lsp_first_section',null,null,'loyverse-sync-settings-page');
         
@@ -42,24 +42,27 @@ Class LoyverseSyncPlugin {
         register_setting('loyversesyncplugin','lvs_wckey',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Key'));
 
         add_settings_field('lvs_wcsecret','Woocommerce API Secret',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_wcsecret'));
-        register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Secret'));        
+        register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Secret'));
+        
+        add_settings_field('lvs_table','Loyverse Custom Table Name',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_table'));
+        register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse Custom Table Name')); 
 
     }
 
-    function inputHTM($args){ ?>
+ function inputHTM($args){ ?>
 
         <input type="text" name="<?php echo $args['theName'] ?>" value="<?php echo esc_attr(get_option($args['theName'])) ?>"></input>
 
     <?php }
 
-    function adminPage(){
+function adminPage(){
 
         add_options_page('Loyverse Sync Settings','Loyverse Settings','manage_options','loyverse-sync-settings-page',array($this,'ourHTML'));
         add_management_page('Loyverse sync', 'Loyverse sync', 'manage_options', 'loyverse-sync', array($this,'loyverse_sync'));
     
     }
     
-    function ourHTML(){ ?>
+function ourHTML(){ ?>
     
         <div class ="wrap">
             <h1>Loyverse Sync Settings</h1>
@@ -71,10 +74,10 @@ Class LoyverseSyncPlugin {
                 ?>
 
             </form>
-    </div>
-    
-    <?php }
-
+        </div>
+        
+        <?php 
+    }
 
 function loyverse_categories_connection(){
 
@@ -93,7 +96,6 @@ function loyverse_categories_connection(){
     return $data;
     
 }
-
 function loyverse_items_connection(){
 
     ?>        
@@ -117,7 +119,6 @@ function loyverse_items_connection(){
        return $data;
 
 }
-
 function get_loyverse_category_by_id($catid){
 
         /** Connect to loyverse */
@@ -137,7 +138,6 @@ function get_loyverse_category_by_id($catid){
         return $datacat['name'];
 
 }
-
 function loyverse_delete_objects(){
 
     global $wpdb;
@@ -279,7 +279,6 @@ function loyverse_delete_objects(){
     }
 
 }
-
 function loyverse_sync(){ ?>
     
     
@@ -293,6 +292,38 @@ function loyverse_sync(){ ?>
     <?php
   
     global $wpdb;
+    $tablename = get_option('lvs_table','1');
+
+    if($tablename == 1){
+       
+    ?>        
+        <pre> Loyverse Table Name is empty. Please configure it on the settings page. </pre>
+    <?php   
+
+        exit;
+
+    }
+    else
+    {
+        /* Check if custom table exists */
+
+        $sql = "SHOW tables LIKE '".$tablename."'";
+        $res = $wpdb->query($sql);
+
+        if(($res->num_rows == 0){
+
+        ?>        
+            <pre> Loyverse Table does not exist. </pre>
+        <?php   
+    
+            exit;
+
+        }
+
+    }
+
+    /*Check if custom database exists */
+
 	$loyverse_items = [];
 
 	/**Connect to WooCommerce */
@@ -329,8 +360,10 @@ function loyverse_sync(){ ?>
             $loyverse_category_id = $category['id'];
             
             /** Get data from database */
-            
-            $queryresults = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
+
+            $sql = "SELECT * FROM ". $tablename;
+            print_r($sql);
+            $queryresults = $wpdb->get_results( $sql );
 
             $found = 0;
  
@@ -347,7 +380,7 @@ function loyverse_sync(){ ?>
                             $url = 'products/categories/'.$qres->wc_id;
                             $woocommerce->put( $url, $prod_data );
 
-                            $wpdb->update( 'wp_lv_sync' , $db_data, array( 'lv_id' => $category['id'] ));
+                            $wpdb->update( $tablename , $db_data, array( 'lv_id' => $category['id'] ));
 
                         ?>        
                             <pre> Category <?php echo $category['name'] ?> updated. </pre>
@@ -385,9 +418,8 @@ function loyverse_sync(){ ?>
                 );
 
                 /* Insert into database wp_lv_sync */
-                $table_name = 'wp_lv_sync';
-
-                    $result = $wpdb->insert($table_name,$data, $format=NULL);
+                
+                    $result = $wpdb->insert($tablename,$data, $format=NULL);
 
                     if($result==1){ ?>
 
@@ -490,7 +522,7 @@ function loyverse_sync(){ ?>
                             $url = 'products/'.$qres->wc_id;
                             $woocommerce->put( $url, $prod_data );
 
-                            $wpdb->update( 'wp_lv_sync' , $db_data, array( 'lv_id' => $loyverse_item_id));
+                            $wpdb->update( $tablename , $db_data, array( 'lv_id' => $loyverse_item_id));
 
                         ?>        
                             <pre> Item <?php echo $loyverse_item_name ?> updated. </pre>
@@ -543,8 +575,7 @@ function loyverse_sync(){ ?>
                                 (array) $theitem = $woocommerce->get('products',['search' => $loyverse_item_slug]);
 
                                 /* Insert into database wp_lv_sync */
-                                $table_name = 'wp_lv_sync';
-
+                                
                                 $db_data = array(
                                     'lv_id' => $loyverse_item_id,
                                     'lv_name' => $loyverse_item_name,
@@ -552,7 +583,7 @@ function loyverse_sync(){ ?>
                                     'desc' => 'Item'
                                 );
 
-                                $result = $wpdb->insert($table_name,$db_data, $format=NULL);
+                                $result = $wpdb->insert($tablename,$db_data, $format=NULL);
 
                                 if($result==1){ ?>
 
