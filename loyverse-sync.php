@@ -144,7 +144,7 @@ function loyverse_delete_objects(){
 
     ?>
 
-    <pre> Hello World for the deletion! </pre>
+    <pre> Starting deleted objects check! </pre>
 
     <?php
 
@@ -164,6 +164,8 @@ function loyverse_delete_objects(){
 		]
 	);
 
+    $found = 0;
+
     foreach($databaseresults[0] as $dbres){
 
         $found = 0;
@@ -179,9 +181,9 @@ function loyverse_delete_objects(){
         $lvsyncid = $dbres->lv_sync_id;
         $desc = $dbres->desc;
 
-        print_r($dbres);
+        /*print_r($dbres);*/
 
-        if($desc = 'Category'){
+        if($desc == 'Category'){
 
             foreach($loyversecategories[0] as $lv_cat){
 
@@ -196,72 +198,85 @@ function loyverse_delete_objects(){
                         <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
                     
                     <?php  
-                    $found = 1;
-                    break;  
+                        $found = 1;
+                        break;
                     }
-                  
-    
+                      
                 }
             }
-
-
 
         }
 
+        if($found == 0 && $desc == 'Category'){
 
-
-        foreach($loyversecategories[0] as $lv_cat){
-
-            foreach($lv_cat as $category){   
+            ?>
+        
+            <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
+        
+            <?php
+            /* Delete catagory in Woocommerce */
+            $url = 'products/categories/'.$wcid;
+            /*print_r($url);*/
+            $woocommerce->delete($url, ['force' => true]);
+            $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
     
-                $loyverse_cat_id = $category['id'];
-
-                if($lvid ===$loyverse_cat_id ){
-
-                    ?>
-
-                    <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
-                
-                <?php  
-                $found = 1;
-                break;  
-                }
-              
-
-            }
-
-            print_r ($found);
-
-            if($found == 1){
-
-                break;
-
-            }
-
-            if($found == 0){
-
-                ?>
+            ?>
+    
+            <pre> Category <?php echo $lvname ?> deleted...</pre>
         
-                <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
-            
-                <?php
-                /* Delete catagory in Woocommerce */
-                $url = 'products/categories/'.$wcid;
-                /*print_r($url);*/
-                $woocommerce->delete($url, ['force' => true]);
-                $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
+            <?php            
+            $found = 0;
+
+        }
+
+        if($desc == 'Item'){
+
+            foreach($loyverseItems[0] as $lv_item){
+
+                foreach($lv_item as $item){   
         
-                ?>
-        
-                <pre> Category <?php echo $lvname ?> deleted...</pre>
-            
-                <?php
+                    $loyverse_item_id = $item['id'];
+    
+                    if($lvid ===$loyverse_item_id ){
+    
+                        ?>
+    
+                        <pre> Item <?php echo $lvname ?> still exists. Skipping...</pre>
                     
-            }
-            
-        }
+                    <?php  
 
-    }   
+                        $found = 1;
+                        break;
+                    }
+                                          
+                }
+            }
+
+        }       
+
+        if($found == 0 && $desc == 'Item'){
+
+            ?>
+        
+            <pre> Item <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
+        
+            <?php
+            /* Delete Item in Woocommerce */
+            $url = 'products/'.$wcid;
+            /*print_r($url);*/
+            $woocommerce->delete($url, ['force' => true]);
+            $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
+    
+            ?>
+    
+            <pre> Item <?php echo $lvname ?> deleted...</pre>
+        
+            <?php            
+            $found = 0;
+
+        }
+        
+    }
 
 }
 
