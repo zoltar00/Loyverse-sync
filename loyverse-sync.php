@@ -151,7 +151,7 @@ function loyverse_delete_objects(){
     /* Get all items from Databases */
     $databaseresults[] = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
     $loyversecategories[] = $this->loyverse_categories_connection();
-    $loyverseItmes[] =  $this->loyverse_items_connection();
+    $loyverseItems[] =  $this->loyverse_items_connection();
     
     $woocommerce = new Client(
 		'https://mammamia.mimlab.ch',
@@ -166,6 +166,8 @@ function loyverse_delete_objects(){
 
     foreach($databaseresults[0] as $dbres){
 
+        $found = 0;
+
         global $lvid;
         global $lvname;
         global $wcid;
@@ -175,6 +177,38 @@ function loyverse_delete_objects(){
         $lvname = $dbres->lv_name;
         $wcid = $dbres->wc_id;
         $lvsyncid = $dbres->lv_sync_id;
+        $desc = $dbres->desc;
+
+        print_r($dbres);
+
+        if($desc = 'Category'){
+
+            foreach($loyversecategories[0] as $lv_cat){
+
+                foreach($lv_cat as $category){   
+        
+                    $loyverse_cat_id = $category['id'];
+    
+                    if($lvid ===$loyverse_cat_id ){
+    
+                        ?>
+    
+                        <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
+                    
+                    <?php  
+                    $found = 1;
+                    break;  
+                    }
+                  
+    
+                }
+            }
+
+
+
+        }
+
+
 
         foreach($loyversecategories[0] as $lv_cat){
 
@@ -182,42 +216,52 @@ function loyverse_delete_objects(){
     
                 $loyverse_cat_id = $category['id'];
 
-                $found = 0;
-                if($lvid ===$loyverse_cat_id){
+                if($lvid ===$loyverse_cat_id ){
 
                     ?>
 
                     <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
                 
                 <?php  
-                $found = $found + 1 ;                 
-                break;
+                $found = 1;
+                break;  
                 }
+              
 
             }
+
+            print_r ($found);
+
+            if($found == 1){
+
+                break;
+
+            }
+
+            if($found == 0){
+
+                ?>
+        
+                <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
+            
+                <?php
+                /* Delete catagory in Woocommerce */
+                $url = 'products/categories/'.$wcid;
+                /*print_r($url);*/
+                $woocommerce->delete($url, ['force' => true]);
+                $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
+        
+                ?>
+        
+                <pre> Category <?php echo $lvname ?> deleted...</pre>
+            
+                <?php
+                    
+            }
+            
         }
-    
-    }
 
-    if($found == 0){
-
-        ?>
-
-        <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
-    
-        <?php
-        /* Delete catagory in Woocommerce */
-        $url = 'products/categories/'.$wcid;
-        /*print_r($url);*/
-        $woocommerce->delete($url, ['force' => true]);
-        $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
-
-        ?>
-
-        <pre> Category <?php echo $lvname ?> deleted...</pre>
-    
-        <?php
-    }    
+    }   
 
 }
 
@@ -321,7 +365,8 @@ function loyverse_sync(){ ?>
                 $data = array(
                     'lv_id' => $category['id'],
                     'lv_name' => $category['name'],
-                    'wc_id' => $thecategory[0] ->id
+                    'wc_id' => $thecategory[0] ->id,
+                    'desc' => 'Category'
                 );
 
                 /* Insert into database wp_lv_sync */
@@ -488,7 +533,8 @@ function loyverse_sync(){ ?>
                                 $db_data = array(
                                     'lv_id' => $loyverse_item_id,
                                     'lv_name' => $loyverse_item_name,
-                                    'wc_id' => $theitem[0] ->id
+                                    'wc_id' => $theitem[0] ->id,
+                                    'desc' => 'Item'
                                 );
 
                                 $result = $wpdb->insert($table_name,$db_data, $format=NULL);
