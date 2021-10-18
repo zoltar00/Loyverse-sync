@@ -19,7 +19,7 @@ if ( is_readable( $autoloader ) ) {
 use Automattic\WooCommerce\Client;
 use Automattic\WooCommerce\HttpClient\HttpClientException;
 
-
+require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
 Class LoyverseSyncPlugin {
 
@@ -179,7 +179,7 @@ function loyverse_delete_objects(){
         $lvname = $dbres->lv_name;
         $wcid = $dbres->wc_id;
         $lvsyncid = $dbres->lv_sync_id;
-        $desc = $dbres->desc;
+        $desc = $dbres->lv_desc;
 
         /*print_r($dbres);*/
 
@@ -284,9 +284,9 @@ function loyverse_sync(){ ?>
     
 
     <div class ="wrap">
-        <h1>Loyverse Synchronization</h1>
+        <h1>Loyverse Synchronization Log</h1>
         <br />
-        <pre> Starting synchronization </pre>
+        <pre> Starting synchronization ...</pre>
     </div>
 
     <?php
@@ -297,7 +297,7 @@ function loyverse_sync(){ ?>
     if($tablename == 1){
        
     ?>        
-        <pre> Loyverse Table Name is empty. Please configure it on the settings page. </pre>
+        <pre> Loyverse Table Name is empty. Please configure it on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
     <?php   
 
         exit;
@@ -307,16 +307,39 @@ function loyverse_sync(){ ?>
     {
         /* Check if custom table exists */
 
-        $sql = "SHOW tables LIKE '".$tablename."'";
+        $sql = "SHOW tables LIKE 'wp_". $tablename. "';";
         $res = $wpdb->query($sql);
 
-        if(($res->num_rows == 0){
+        if($res == 0 && strlen($tablename) >0 ){
 
         ?>        
-            <pre> Loyverse Table does not exist. </pre>
+            <pre> Loyverse Table does not exist. Creating <?php echo $tablename ?></pre>
         <?php   
+
+                $ddl =" CREATE TABLE wp_$tablename (
+                lv_sync_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+                lv_id VARCHAR(100),
+                lv_name VARCHAR(100),
+                wc_id VARCHAR(100),
+                lv_desc VARCHAR(100)
+                );";
     
-            exit;
+
+            dbDelta($ddl);
+            
+
+        }
+        if(strlen($tablename) ==0){
+        ?>        
+            <pre> Loyverse Table <?php echo $tablename ?> cannot be an empty string. Please update on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
+        <?php  
+        exit;
+
+        }
+        else{
+            ?>        
+            <pre> Loyverse Table <?php echo $tablename ?> exists. Skipping...</pre>
+        <?php  
 
         }
 
@@ -324,6 +347,7 @@ function loyverse_sync(){ ?>
 
     /*Check if custom database exists */
 
+    $thedatabase = 'wp_'.$tablename;
 	$loyverse_items = [];
 
 	/**Connect to WooCommerce */
@@ -361,10 +385,8 @@ function loyverse_sync(){ ?>
             
             /** Get data from database */
 
-            $sql = "SELECT * FROM ". $tablename;
-            print_r($sql);
-            $queryresults = $wpdb->get_results( $sql );
-
+            $sql = "SELECT * FROM wp_". get_option('lvs_table');
+            $queryresults = $wpdb->get_results($sql);
             $found = 0;
  
             foreach($queryresults as $qres){ 
@@ -380,7 +402,7 @@ function loyverse_sync(){ ?>
                             $url = 'products/categories/'.$qres->wc_id;
                             $woocommerce->put( $url, $prod_data );
 
-                            $wpdb->update( $tablename , $db_data, array( 'lv_id' => $category['id'] ));
+                            $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $category['id'] ));
 
                         ?>        
                             <pre> Category <?php echo $category['name'] ?> updated. </pre>
@@ -414,12 +436,12 @@ function loyverse_sync(){ ?>
                     'lv_id' => $category['id'],
                     'lv_name' => $category['name'],
                     'wc_id' => $thecategory[0] ->id,
-                    'desc' => 'Category'
+                    'lv_desc' => 'Category'
                 );
 
                 /* Insert into database wp_lv_sync */
                 
-                    $result = $wpdb->insert($tablename,$data, $format=NULL);
+                    $result = $wpdb->insert($thedatabase,$data, $format=NULL);
 
                     if($result==1){ ?>
 
@@ -522,7 +544,7 @@ function loyverse_sync(){ ?>
                             $url = 'products/'.$qres->wc_id;
                             $woocommerce->put( $url, $prod_data );
 
-                            $wpdb->update( $tablename , $db_data, array( 'lv_id' => $loyverse_item_id));
+                            $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $loyverse_item_id));
 
                         ?>        
                             <pre> Item <?php echo $loyverse_item_name ?> updated. </pre>
@@ -580,10 +602,10 @@ function loyverse_sync(){ ?>
                                     'lv_id' => $loyverse_item_id,
                                     'lv_name' => $loyverse_item_name,
                                     'wc_id' => $theitem[0] ->id,
-                                    'desc' => 'Item'
+                                    'lv_desc' => 'Item'
                                 );
 
-                                $result = $wpdb->insert($tablename,$db_data, $format=NULL);
+                                $result = $wpdb->insert($thedatabase,$db_data, $format=NULL);
 
                                 if($result==1){ ?>
 
