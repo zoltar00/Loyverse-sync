@@ -19,7 +19,21 @@ if ( is_readable( $autoloader ) ) {
 use Automattic\WooCommerce\Client;
 use Automattic\WooCommerce\HttpClient\HttpClientException;
 
-require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+/*Schedule loyverse-sync */
+register_activation_hook( __FILE__, 'loyversesync_plugin_activation' );
+register_deactivation_hook( __FILE__, 'loyversesync_plugin_deactivation' );
+
+function loyversesync_plugin_activation() {
+    if ( ! wp_next_scheduled( 'loyverse_sync' ) ) {
+        wp_schedule_event( time(), 'every_minute', 'loyverse_sync' );
+    }
+}
+
+function loyversesync_plugin_deactivation() {
+    wp_clear_scheduled_hook( 'loyverse_sync' );
+}
+
+/*Auto-update plugin */
 
 require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
@@ -29,6 +43,10 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 );
 $myUpdateChecker->setAuthentication('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');
 $myUpdateChecker->setBranch('main');
+
+/*Update database requirement */
+
+require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
 Class LoyverseSyncPlugin {
 
