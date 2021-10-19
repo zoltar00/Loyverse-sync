@@ -1,7 +1,7 @@
 <?php
 /**
 * Plugin Name: Loyverse-Sync
-* Plugin URI: https://github.com/zoltar00/WooCommeerce-plugin/
+* Plugin URI: https://github.com/zoltar00/Loyvserse-sync/
 * Description: Synching of Loyverse POS
 * Version: 1.2
 * Author: Sylvan Laurence
@@ -23,7 +23,7 @@ require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
 require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-	'https://github.com/zoltar00/WooCommeerce-plugin/',
+	'https://github.com/zoltar00/Loyvserse-sync/',
 	__FILE__, //Full path to the main plugin file or functions.php.
 	'loyverse-sync'
 );
