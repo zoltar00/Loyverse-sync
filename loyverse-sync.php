@@ -3,7 +3,7 @@
 * Plugin Name: Loyverse-Sync
 * Plugin URI: https://mammami1.mimlab.ch/
 * Description: Synching of Loyverse POS
-* Version: 1.1
+* Version: 1.2
 * Author: Sylvan Laurence
 * Author URI: https://slcservices.ch/
 **/
@@ -23,11 +23,11 @@ require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
 require 'plugin-update-checker/plugin-update-checker.php';
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-	'https://github.com/zoltar00/WooCommeerce-plugin',
+	'https://github.com/zoltar00/WooCommeerce-plugin/',
 	__FILE__, //Full path to the main plugin file or functions.php.
 	'loyverse-sync'
 );
-$myUpdateChecker->setAuthentication('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');
+$myUpdateChecker->setAuthentication('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');
 $myUpdateChecker->setBranch('main');
 
 Class LoyverseSyncPlugin {
