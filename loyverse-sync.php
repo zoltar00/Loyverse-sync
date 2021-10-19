@@ -19,6 +19,33 @@ if ( is_readable( $autoloader ) ) {
 use Automattic\WooCommerce\Client;
 use Automattic\WooCommerce\HttpClient\HttpClientException;
 
+require_once( ABSPATH . 'wp-admin/includes/plugin.php');
+/*Check if Plugin is active */
+if( is_plugin_active( 'featured-image-by-url/featured-image-by-url.php' ) ) {
+	// Plugin is active
+}
+else
+{
+
+    ?>        
+        <pre> Plugin Featured Image by URL is not installed or active. Please activate it or install it. Instructions are <a href='https://wordpress.org/plugins/featured-image-by-url/'>here.</a></pre>
+    <?php  
+    exit;
+}
+
+if( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+	// Plugin is active
+}
+else
+{
+
+    ?>        
+        <pre> Plugin WooCommerce is not installed or active. Please activate it or install it. Instructions are <a href='https://wordpress.org/plugins/woocommerce/'>here.</a></pre>
+    <?php 
+    exit;
+
+}
+
 /*Schedule loyverse-sync */
 register_activation_hook( __FILE__, 'loyversesync_plugin_activation' );
 register_deactivation_hook( __FILE__, 'loyversesync_plugin_deactivation' );
@@ -35,7 +62,7 @@ function loyversesync_plugin_deactivation() {
 
 /*Auto-update plugin */
 
-require 'plugin-update-checker/plugin-update-checker.php';
+require_once('plugin-update-checker/plugin-update-checker.php');
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'https://github.com/zoltar00/Loyvserse-sync/',
 	__FILE__, //Full path to the main plugin file or functions.php.
