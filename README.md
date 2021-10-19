@@ -13,3 +13,7 @@ Normally there is no Access to configure. If the database is not present the plu
 
 The plugin synchronizes Categories and Items from Loyverse to Woocommerce. In Woocommerce only SIMPLE products are created.
 The images for the products are not synched they are a link to the images stored in Loyverse.
+
+Installation:
+- Import the zip file in Wordpress.
+- Configure the plugin on the settings page.
