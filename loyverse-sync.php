@@ -54,8 +54,16 @@ function __construct(){
 
         add_action('admin_menu', array($this,'adminPage'));
         add_action( 'admin_init', array($this,'settings'));
+        add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_settings_link' ) );
         /*add_action('admin_menu', 'lvsync_create_menu');*/
 
+    }
+
+function plugin_settings_link($links) {
+        $url = get_admin_url() . 'options-general.php?page=loyverse-sync-settings-page';
+        $settings_link = '<a href="'.$url.'">' . __( 'Settings', 'textdomain' ) . '</a>';
+        array_unshift( $links, $settings_link );
+        return $links;
     }
 
 function settings(){
