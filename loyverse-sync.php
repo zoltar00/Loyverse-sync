@@ -21,6 +21,15 @@ use Automattic\WooCommerce\HttpClient\HttpClientException;
 
 require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
+require 'plugin-update-checker/plugin-update-checker.php';
+$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+	'https://github.com/zoltar00/WooCommeerce-plugin',
+	__FILE__, //Full path to the main plugin file or functions.php.
+	'loyverse-sync'
+);
+$myUpdateChecker->setAuthentication('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');
+$myUpdateChecker->setBranch('main');
+
 Class LoyverseSyncPlugin {
 
 function __construct(){
