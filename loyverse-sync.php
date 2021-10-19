@@ -1,7 +1,7 @@
 <?php
 /**
 * Plugin Name: Loyverse-Sync
-* Plugin URI: https://mammami1.mimlab.ch/
+* Plugin URI: https://github.com/zoltar00/WooCommeerce-plugin/
 * Description: Synching of Loyverse POS
 * Version: 1.2
 * Author: Sylvan Laurence
