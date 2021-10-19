@@ -3,7 +3,7 @@
 * Plugin Name: Loyverse-Sync
 * Plugin URI: https://github.com/zoltar00/Loyvserse-sync/
 * Description: Synching of Loyverse POS
-* Version: 1.2
+* Version: 1.0
 * Author: Sylvan Laurence
 * Author URI: https://slcservices.ch/
 **/
