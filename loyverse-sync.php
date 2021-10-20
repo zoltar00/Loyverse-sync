@@ -1,9 +1,9 @@
 <?php
 /**
 * Plugin Name: Loyverse-Sync
-* Plugin URI: https://github.com/zoltar00/Loyvserse-sync/
-* Description: Synching of Loyverse POS
-* Version: 1.2
+* Plugin URI: https://github.com/zoltar00/Loyverse-sync/
+* Description: Synching of Loyverse POS to Woocommerce
+* Version: 1.0.0
 * Author: SLC Services, Sylvan Laurence
 * Author URI: https://slcservices.ch/
 **/
