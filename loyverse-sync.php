@@ -49,17 +49,18 @@ else
 /*Schedule loyverse-sync */
 register_activation_hook( __FILE__, 'loyversesync_plugin_activation' );
 register_deactivation_hook( __FILE__, 'loyversesync_plugin_deactivation' );
-
 function loyversesync_plugin_activation() {
-    if ( ! wp_next_scheduled( 'loyverse_sync' ) ) {
-        wp_schedule_event( time(), 'every_minute', 'loyverse_sync' );
-    }
+    
+        if ( ! wp_next_scheduled( 'lvs_cron' ) ) {
+            wp_schedule_event( time(), 'every_minute', 'lvs_cron' );
+        }
 }
-
+    
 function loyversesync_plugin_deactivation() {
-    wp_clear_scheduled_hook( 'loyverse_sync' );
+        $timestamp = wp_next_scheduled( 'lvs_cron' );
+        wp_unschedule_event( $timestamp, 'lvs_cron' );
 }
-
+    
 /*Auto-update plugin */
 
 require_once('plugin-update-checker/plugin-update-checker.php');
@@ -82,6 +83,8 @@ function __construct(){
         add_action('admin_menu', array($this,'adminPage'));
         add_action( 'admin_init', array($this,'settings'));
         add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_settings_link' ) );
+        add_action( 'lvs_cron', array($this,'loyverse_sync' ));
+
         /*add_action('admin_menu', 'lvsync_create_menu');*/
 
     }
@@ -111,7 +114,7 @@ function settings(){
 
     }
 
- function inputHTM($args){ ?>
+function inputHTM($args){ ?>
 
         <input type="text" name="<?php echo $args['theName'] ?>" value="<?php echo esc_attr(get_option($args['theName'])) ?>"></input>
 
@@ -121,8 +124,33 @@ function adminPage(){
 
         add_options_page('Loyverse Sync Settings','Loyverse Settings','manage_options','loyverse-sync-settings-page',array($this,'ourHTML'));
         add_management_page('Loyverse sync', 'Loyverse sync', 'manage_options', 'loyverse-sync', array($this,'loyverse_sync'));
+        add_management_page('Loyverse sync log', 'Loyverse sync log', 'manage_options', 'loyverse-sync-log', array($this,'loyverse_sync_log'));
     
     }
+
+function write_to_loyverse_sync_log($msg){
+
+        date_default_timezone_set("Europe/Zurich");
+        $time = date( "d/m/Y h:i a", time());
+        $txt = "#$time: $msg\r\n"; 
+        $file = plugin_dir_path( __FILE__ ) . '/lvs_log.txt'; 
+        $open = fopen( $file, "a" ); 
+        $write = fputs( $open, $txt );
+        fclose($myfile);
+
+    
+}
+
+function loyverse_sync_log(){
+
+    $logFile = plugin_dir_path( __FILE__ ) . '/lvs_log.txt';
+    echo '<pre class="log">';
+    $myfile = fopen($logFile, 'r') or die(__('Unable to open log file!', 'loyverse_sync_log'));
+    echo fread($myfile, filesize($logFile));
+    fclose($myfile);
+    echo '</pre>';
+
+}
     
 function ourHTML(){ ?>
     
@@ -341,9 +369,7 @@ function loyverse_delete_objects(){
     }
 
 }
-function loyverse_sync(){ ?>
-    
-    
+function loyverse_sync(){ ?>  
 
     <div class ="wrap">
         <h1>Loyverse Synchronization Log</h1>
@@ -352,7 +378,9 @@ function loyverse_sync(){ ?>
     </div>
 
     <?php
-  
+
+    $this ->write_to_loyverse_sync_log('Starting synchronization ...');
+
     global $wpdb;
     $tablename = get_option('lvs_table','1');
 
@@ -360,14 +388,16 @@ function loyverse_sync(){ ?>
        
     ?>        
         <pre> Loyverse Table Name is empty. Please configure it on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
-    <?php   
+    <?php 
 
+    $this ->write_to_loyverse_sync_log('Loyverse Table Name is empty ...');
         exit;
 
     }
     else
     {
         /* Check if custom table exists */
+
 
         $sql = "SHOW tables LIKE 'wp_". $tablename. "';";
         $res = $wpdb->query($sql);
