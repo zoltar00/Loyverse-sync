@@ -129,15 +129,21 @@ function adminPage(){
     }
 
 function write_to_loyverse_sync_log($msg){
+    
+    $file = plugin_dir_path( __FILE__ ) . '/lvs_log.txt';
+    
+    if (!unlink($file)) { 
+        echo ("$file cannot be deleted due to an error"); 
+    } 
+    else { 
 
         date_default_timezone_set("Europe/Zurich");
         $time = date( "d/m/Y h:i a", time());
         $txt = "#$time: $msg\r\n"; 
-        $file = plugin_dir_path( __FILE__ ) . '/lvs_log.txt'; 
         $open = fopen( $file, "a" ); 
         $write = fputs( $open, $txt );
         fclose($myfile);
-
+    }
     
 }
 
@@ -175,7 +181,7 @@ function loyverse_categories_connection(){
         <pre> Getting categories from Loyverse... </pre>
     <?php  
 
-    
+    $this ->write_to_loyverse_sync_log('Getting categories from Loyverse...');
     $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories', array(
         'headers' => array(
             'Authorization' => 'Bearer ' . get_option('lvs_lvtoken','1')
@@ -194,7 +200,8 @@ function loyverse_items_connection(){
     <?php  
    
        /** Connect to Loyverse */
-       
+       $this ->write_to_loyverse_sync_log('Getting items from Loyverse...');
+       $this ->write_to_loyverse_sync_log('Connecting to Loyverse API...');
        $resp = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items', array(
            'headers' => array(
                'Authorization' => 'Bearer ' . get_option('lvs_lvtoken','1')
@@ -205,6 +212,7 @@ function loyverse_items_connection(){
             <pre> Connected to Loyverse API... </pre>
         <?php           
 
+        $this ->write_to_loyverse_sync_log('Connected to Loyverse API... ');
        $data = json_decode($resp,true);
        return $data;
 
@@ -237,6 +245,8 @@ function loyverse_delete_objects(){
     <pre> Starting deleted objects check! </pre>
 
     <?php
+
+    $this ->write_to_loyverse_sync_log('Starting deleted objects check!');
 
     /* Get all items from Databases */
     $databaseresults[] = $wpdb->get_results( "SELECT * FROM wp_lv_sync" );
@@ -287,7 +297,9 @@ function loyverse_delete_objects(){
     
                         <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
                     
-                    <?php  
+                    <?php 
+                    
+                        $this ->write_to_loyverse_sync_log('Category '. $lvname .' still exists. Skipping...');
                         $found = 1;
                         break;
                     }
@@ -304,6 +316,8 @@ function loyverse_delete_objects(){
             <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
         
             <?php
+
+            $this ->write_to_loyverse_sync_log('Category '. $lvname .' does not exist anymore. Deleting...');
             /* Delete catagory in Woocommerce */
             $url = 'products/categories/'.$wcid;
             /*print_r($url);*/
@@ -314,7 +328,8 @@ function loyverse_delete_objects(){
     
             <pre> Category <?php echo $lvname ?> deleted...</pre>
         
-            <?php            
+            <?php 
+            $this ->write_to_loyverse_sync_log('Category '. $lvname .' deleted...');           
             $found = 0;
 
         }
@@ -334,7 +349,7 @@ function loyverse_delete_objects(){
                         <pre> Item <?php echo $lvname ?> still exists. Skipping...</pre>
                     
                     <?php  
-
+                        $this ->write_to_loyverse_sync_log('Item '. $lvname .' still exists. Skipping...');
                         $found = 1;
                         break;
                     }
@@ -351,6 +366,8 @@ function loyverse_delete_objects(){
             <pre> Item <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
         
             <?php
+
+            $this ->write_to_loyverse_sync_log('Item '. $lvname .' does not exist anymore. Deleting...');
             /* Delete Item in Woocommerce */
             $url = 'products/'.$wcid;
             /*print_r($url);*/
@@ -361,7 +378,8 @@ function loyverse_delete_objects(){
     
             <pre> Item <?php echo $lvname ?> deleted...</pre>
         
-            <?php            
+            <?php 
+            $this ->write_to_loyverse_sync_log('Item '. $lvname .' deleted...');           
             $found = 0;
 
         }
@@ -390,7 +408,7 @@ function loyverse_sync(){ ?>
         <pre> Loyverse Table Name is empty. Please configure it on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
     <?php 
 
-    $this ->write_to_loyverse_sync_log('Loyverse Table Name is empty ...');
+    $this ->write_to_loyverse_sync_log('Loyverse Table Name is empty. Please configure it on the settings page.');
         exit;
 
     }
@@ -408,6 +426,8 @@ function loyverse_sync(){ ?>
             <pre> Loyverse Table does not exist. Creating <?php echo $tablename ?></pre>
         <?php   
 
+            $this ->write_to_loyverse_sync_log('Loyverse Table does not exist. Creating '. $tablename);
+
                 $ddl =" CREATE TABLE wp_$tablename (
                 lv_sync_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
                 lv_id VARCHAR(100),
@@ -424,7 +444,9 @@ function loyverse_sync(){ ?>
         if(strlen($tablename) ==0){
         ?>        
             <pre> Loyverse Table <?php echo $tablename ?> cannot be an empty string. Please update on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
-        <?php  
+        <?php 
+        
+        $this ->write_to_loyverse_sync_log('Loyverse Table '. $tablename . 'cannot be an empty string. Please update on the settings page.');
         exit;
 
         }
@@ -432,6 +454,7 @@ function loyverse_sync(){ ?>
             ?>        
             <pre> Loyverse Table <?php echo $tablename ?> exists. Skipping...</pre>
         <?php  
+        $this ->write_to_loyverse_sync_log('Loyverse Table '. $tablename. ' exists. Skipping... ');
 
         }
 
@@ -446,6 +469,7 @@ function loyverse_sync(){ ?>
     ?>        
         <pre> Connecting to Woocommerce API... </pre>
     <?php    
+    $this ->write_to_loyverse_sync_log('Connecting to Woocommerce API... ');
 
 	$woocommerce = new Client(
 		'https://mammamia.mimlab.ch',
@@ -462,6 +486,7 @@ function loyverse_sync(){ ?>
         <pre> Connected to Woocommerce API... </pre>
     <?php  
 
+    $this ->write_to_loyverse_sync_log('Connected to Woocommerce API... ');
     /** Connect to Loyverse to get categories*/
     
 
@@ -500,6 +525,7 @@ function loyverse_sync(){ ?>
                             <pre> Category <?php echo $category['name'] ?> updated. </pre>
                         <?php      
                         
+                        $this ->write_to_loyverse_sync_log('Category '.$category['name'].' updated. ');
 
                         $found = $found + 1;
 
@@ -521,6 +547,8 @@ function loyverse_sync(){ ?>
                     <pre> Sending category <?php echo $category['name'] ?> to woocommerce... </pre>
                 <?php    
 
+                $this ->write_to_loyverse_sync_log('Sending category '.$category['name'].' to woocommerce... ');
+
                 $woocommerce->post( 'products/categories', $prod_data );
                 (array) $thecategory = $woocommerce->get('products/categories',['search' => sanitize_title($category['name'])]);
             
@@ -539,12 +567,16 @@ function loyverse_sync(){ ?>
 
                         <pre> Saved category <?php echo $category['name'] ?> to the database... </pre>
 
-                    <?php }
+                    <?php 
+                    $this ->write_to_loyverse_sync_log('Saved category '.$category['name'].' to the database... ');    
+                }
                     else{ ?>
                         
                         <pre> Unable to save category <?php echo $category['name'] ?> to the database... </pre>
 
-                    <?php }
+                    <?php 
+                    $this ->write_to_loyverse_sync_log('Unable to save category '.$category['name'].' to the database... ');    
+                }
 
 
             }
@@ -561,7 +593,7 @@ function loyverse_sync(){ ?>
             <pre> Got all Items... </pre>
         <?php   
 
-
+        $this ->write_to_loyverse_sync_log('Got all Items...  ');
 
         foreach ($loyverse_items[0] as $loyverse_item) {
 
@@ -640,8 +672,9 @@ function loyverse_sync(){ ?>
 
                         ?>        
                             <pre> Item <?php echo $loyverse_item_name ?> updated. </pre>
-                        <?php     
+                        <?php   
 
+                        $this ->write_to_loyverse_sync_log('Item '. $loyverse_item_name .'updated.');
                         $found = $found + 1;
 
                         break;
@@ -680,10 +713,10 @@ function loyverse_sync(){ ?>
                                 ];
 
                                 ?>        
-                                    <pre> Sending item <?php echo $loyverse_item_slug ?> to woocommerce..</pre>
+                                    <pre> Sending item <?php echo $loyverse_item_slug ?> to woocommerce...</pre>
                                 <?php      
                                 
-                    
+                                $this ->write_to_loyverse_sync_log('Sending item '. $loyverse_item_slug .'to woocommerce...');
                                 /**Send to WooCommerce */
                                 $woocommerce->post( 'products', $prod_data );
                                 (array) $theitem = $woocommerce->get('products',['search' => $loyverse_item_slug]);
@@ -703,12 +736,16 @@ function loyverse_sync(){ ?>
 
                                     <pre> Saved item <?php echo $loyverse_item_name ?> to the database... </pre>
 
-                                <?php }
+                                <?php 
+                                $this ->write_to_loyverse_sync_log('Saved item '. $loyverse_item_name .'to the database...');    
+                            }
                                 else{ ?>
                                     
                                     <pre> Unable to save item <?php echo $loyverse_item_name?> to the database... </pre>
 
-                                <?php }    
+                                <?php 
+                                $this ->write_to_loyverse_sync_log('Unable to save item '. $loyverse_item_name .'to the database...');    
+                            }    
 
                             }
 
@@ -718,7 +755,9 @@ function loyverse_sync(){ ?>
             ?>   
                 <pre> Deleting categories and items that are no longer in Loyverse</pre>  <?php $this ->loyverse_delete_objects(); ?>     
                 <pre> Done importing!</pre>
-            <?php   
+            <?php  
+            $this ->write_to_loyverse_sync_log('Deleting categories and items that are no longer in Loyverse');
+            $this ->write_to_loyverse_sync_log('Done importing!'); 
         }
 
 }
