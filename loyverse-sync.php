@@ -65,7 +65,7 @@ function loyversesync_plugin_deactivation() {
 
 require_once('plugin-update-checker/plugin-update-checker.php');
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-	'https://github.com/zoltar00/Loyvserse-sync/',
+	'https://github.com/zoltar00/Loyverse-sync/',
 	__FILE__, //Full path to the main plugin file or functions.php.
 	'loyverse-sync'
 );
