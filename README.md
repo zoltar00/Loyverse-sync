@@ -16,6 +16,7 @@ The plugin synchronizes Categories and Items from Loyverse to Woocommerce. In Wo
 The images for the products are not synched they are a link to the images stored in Loyverse.
 
 Installation:
+- Goto the releases page (https://github.com/zoltar00/Loyvserse-sync/releases/tag/v1.2.0) and download the lastest release)
 - Import the zip file in Wordpress.
 - Activate the plugin prerequisites
 - Activate the plugin
