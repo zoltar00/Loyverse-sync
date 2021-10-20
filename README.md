@@ -1,4 +1,4 @@
-# WooCommeerce-plugin
+# Loyverse Sync
 This plugin Syncs data from Loyverse to Woocommerce.
 
 Prerequistites:
@@ -28,8 +28,8 @@ There are 3 main parts.
 2) A Log viewer on the Tools menu
 3) A manual trigger on the Tools Menu
 
-The Plugin is scheduled to run every minute. You can change the frequency on the cron events page.
-The schedule is automatically activated when you actgivate the pluging it also deactivates if you deactivate the plugin.
+The Plugin is scheduled to run every minute. If you would like to change the frequency of the schedule or view the schedules we recommend installing the following plugin: https://wordpress.org/plugins/wp-crontrol/ .
+The schedule is automatically activated when you activate the pluging it also deactivates if you deactivate the plugin.
 There is a log viewer (Tools -> Loyverse Sync Log) which refreshes at every sync run. 
 
 You can manually trigger a synchronization by going to Tools -> Loyverse Sync
