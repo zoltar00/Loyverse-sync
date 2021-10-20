@@ -70,7 +70,7 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'loyverse-sync'
 );
 $myUpdateChecker->setAuthentication('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');
-$myUpdateChecker->setBranch('main');
+$myUpdateChecker->setBranch('release');
 
 /*Update database requirement */
 
