@@ -112,13 +112,40 @@ function settings(){
         add_settings_field('lvs_table','Loyverse Custom Table Name',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_table'));
         register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse Custom Table Name')); 
 
+        add_settings_field('lvs_schedule','Synchronization Schedule',array($this,'Synchschedule'),'loyverse-sync-settings-page','lsp_first_section');
+        register_setting('loyversesyncplugin','lvs_schedule',array('sanitize_callback' =>'sanitize_text_field','default'=>'0')); 
+
     }
 
 function inputHTM($args){ ?>
 
         <input type="text" name="<?php echo $args['theName'] ?>" value="<?php echo esc_attr(get_option($args['theName'])) ?>"></input>
 
-    <?php }
+    <?php 
+}
+
+function Synchschedule(){ 
+    
+    $schedules = wp_get_schedules();
+    ?>
+
+    <select name="lvs_schedule" >
+
+    <?php 
+    
+    foreach($schedules as $schedule){
+        
+        ?>
+        <option value="<?php echo $schedule['display'] ?>"><?php echo  $schedule['display'] ?></option>
+        <?php
+    }
+
+    ?>
+        
+    </select>
+
+<?php 
+}
 
 function adminPage(){
 
@@ -163,7 +190,7 @@ function ourHTML(){ ?>
         <div class ="wrap">
             <h1>Loyverse Sync Settings</h1>
             <form action="options.php" method="POST">
-                <?php
+                <?php              
                     settings_fields('loyversesyncplugin');
                     do_settings_sections('loyverse-sync-settings-page');
                     submit_button();
