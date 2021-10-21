@@ -49,10 +49,11 @@ else
 /*Schedule loyverse-sync */
 register_activation_hook( __FILE__, 'loyversesync_plugin_activation' );
 register_deactivation_hook( __FILE__, 'loyversesync_plugin_deactivation' );
+
 function loyversesync_plugin_activation() {
     
         if ( ! wp_next_scheduled( 'lvs_cron' ) ) {
-            wp_schedule_event( time(), 'every_minute', 'lvs_cron' );
+            wp_schedule_event( time(), 'rsssl_le_five_minutes', 'lvs_cron' );
         }
 }
     
@@ -154,23 +155,29 @@ function adminPage(){
         add_management_page('Loyverse sync log', 'Loyverse sync log', 'manage_options', 'loyverse-sync-log', array($this,'loyverse_sync_log'));
     
     }
+function init_loyverse_sync_log(){
+
+    $file = plugin_dir_path( __FILE__ ) . '/lvs_log.txt';
+    if(!unlink($file)){
+        echo 'Unable to delete file!';
+    }
+    else{
+        $txt = ""; 
+        $open = fopen( $file, "w" ); 
+        $write = fputs( $open, $txt );
+        fclose($open);
+    }
+}
 
 function write_to_loyverse_sync_log($msg){
     
     $file = plugin_dir_path( __FILE__ ) . '/lvs_log.txt';
-    
-    if (!unlink($file)) { 
-        echo ("$file cannot be deleted due to an error"); 
-    } 
-    else { 
-
         date_default_timezone_set("Europe/Zurich");
         $time = date( "d/m/Y h:i a", time());
         $txt = "#$time: $msg\r\n"; 
         $open = fopen( $file, "a" ); 
         $write = fputs( $open, $txt );
-        fclose($myfile);
-    }
+        fclose($open);
     
 }
 
@@ -423,7 +430,7 @@ function loyverse_sync(){ ?>
     </div>
 
     <?php
-
+    $this->init_loyverse_sync_log();
     $this ->write_to_loyverse_sync_log('Starting synchronization ...');
 
     global $wpdb;
