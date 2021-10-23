@@ -5,7 +5,10 @@ Prerequistites:
 - A free loyverse account (For information about creating an account goto https://loyverse.com)
 - An access token in Loyverse to be able to access the API (This is a payable feature, check on the Loyverse Site for pricing)
 - Woocommerce version 5.8.0 minimum (The plugin will not activate if Woocommerce is not installed and activated)
-- A woocommerce API Token (For intructions: https://docs.woocommerce.com/document/woocommerce-rest-api/)
+- A woocommerce API Token (For intructions: https://docs.woocommerce.com/document/woocommerce-rest-api/). Make sure that the permissions are read/write
+
+![image](https://user-images.githubusercontent.com/32526436/138573861-b4eab01e-9cb2-44c0-a8dc-3d36535dc600.png)
+
 - The plugin uses automattic for Woocommerce: https://packagist.org/packages/automattic/woocommerce
 - Featured Image by URL (This must be installed and activated. The plugin will not activate if this plugin is nto active. More details on the plugin: https://wordpress.org/plugins/featured-image-by-url/)
 
