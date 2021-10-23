@@ -28,7 +28,7 @@ There are 3 main parts.
 2) A Log viewer on the Tools menu
 3) A manual trigger on the Tools Menu
 
-The Plugin is scheduled to run every minute. If you would like to change the frequency of the schedule or view the schedules we recommend installing the following plugin: https://wordpress.org/plugins/wp-crontrol/ .
+The Plugin is scheduled to run every 5 minutes. If you would like to change the frequency of the schedule or view the schedules we recommend installing the following plugin: https://wordpress.org/plugins/wp-crontrol/ .
 The schedule is automatically activated when you activate the pluging it also deactivates if you deactivate the plugin.
 There is a log viewer (Tools -> Loyverse Sync Log) which refreshes at every sync run. 
 
