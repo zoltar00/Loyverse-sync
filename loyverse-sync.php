@@ -451,12 +451,12 @@ function loyverse_sync(){ ?>
     else
     {
         /* Check if custom table exists */
-
+        $done = 0;
 
         $sql = "SHOW tables LIKE 'wp_". $tablename. "';";
         $res = $wpdb->get_results($sql);
 
-        if($res == 0 && strlen($tablename) >0 ){
+        if(empty($res) && strlen($tablename) >0 ){
 
         ?>        
             <pre> Loyverse Table does not exist. Creating <?php echo $tablename ?></pre>
@@ -474,7 +474,7 @@ function loyverse_sync(){ ?>
     
 
             dbDelta($ddl);
-            
+            $done =1;
 
         }
         if(strlen($tablename) ==0){
@@ -486,7 +486,7 @@ function loyverse_sync(){ ?>
         exit;
 
         }
-        else{
+        if($done == 0){
             ?>        
             <pre> Loyverse Table <?php echo $tablename ?> exists. Skipping...</pre>
         <?php  
