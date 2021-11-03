@@ -112,7 +112,13 @@ function settings(){
         register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Secret'));
         
         add_settings_field('lvs_table','Loyverse Custom Table Name',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_table'));
-        register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse Custom Table Name')); 
+        register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse Custom Table Name'));
+        
+        add_settings_field('lvs_catsync','Number of categories to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_catsync'));
+        register_setting('loyversesyncplugin','lvs_catsync',array('sanitize_callback' =>'sanitize_text_field','default'=>'Number of categories to synchronize'));
+
+        add_settings_field('lvs_productsync','Number of products to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_productsync'));
+        register_setting('loyversesyncplugin','lvs_productsync',array('sanitize_callback' =>'sanitize_text_field','default'=>'Number of products to synchronize'));
 
     }
 
@@ -214,8 +220,17 @@ function loyverse_categories_connection(){
         <?php  
 
         $this ->write_to_loyverse_sync_log('Getting categories from Loyverse...');
+
+        $limitcat = get_option('lvs_catsync','50');
+        if(strlen($limitcat) == 0){
+
+            $limitcat = 50;
+
+       }
+
+        //print_r($limitcat);
     
-        $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories', array(
+        $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories?limit='.$limitcat, array(
             'headers' => array(
                 'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
             ),
@@ -235,7 +250,17 @@ function loyverse_items_connection(){
        /** Connect to Loyverse */
        $this ->write_to_loyverse_sync_log('Getting items from Loyverse...');
        $this ->write_to_loyverse_sync_log('Connecting to Loyverse API...');
-       $resp = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items', array(
+
+       $limititem = get_option('lvs_productsync','50');
+       if(strlen($limititem) == 0){
+
+            $limititem = 50;
+
+       }
+
+      // print_r($limititem);
+
+       $resp = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items?limit='.$limititem, array(
            'headers' => array(
                'Authorization' => 'Bearer ' . get_option('lvs_lvtoken','1')
            ),
@@ -254,6 +279,7 @@ function get_loyverse_category_by_id($catid){
 
         /** Connect to loyverse */
 
+        
         $cat_url = 'https://api.loyverse.com/v1.0/categories/'.$catid;
 
         $responsecat = wp_remote_retrieve_body(wp_remote_get($cat_url, array(
@@ -265,10 +291,52 @@ function get_loyverse_category_by_id($catid){
 
         
         $datacat = json_decode($responsecat,true);
-        
+
+               
         return $datacat['name'];
 
     }
+function get_loyverse_category_by_id_for_delete($catid){
+
+    /** Connect to loyverse */
+
+    
+    
+    $cat_url = 'https://api.loyverse.com/v1.0/categories/'.$catid;
+    
+    $responsecat = wp_remote_retrieve_body(wp_remote_get($cat_url, array(
+        'headers' => array(
+            'Authorization' => 'Bearer ' . get_option('lvs_lvtoken','1')
+        ),
+    )));
+
+
+    
+    $datacat = json_decode($responsecat,true);
+     
+    return $datacat['deleted_at'];
+
+}
+
+function get_loyverse_item_by_id($itemid){
+
+    /** Connect to loyverse */
+
+    $item_url = 'https://api.loyverse.com/v1.0/items/'.$itemid;
+
+    $responseitem = wp_remote_retrieve_body(wp_remote_get($item_url, array(
+        'headers' => array(
+            'Authorization' => 'Bearer ' . get_option('lvs_lvtoken','1')
+        ),
+    )));
+
+
+    
+    $datacat = json_decode($responseitem,true);
+    
+    return $responseitem['deleted_at'];
+
+}
 function loyverse_delete_objects(){
 
         global $wpdb;
@@ -284,10 +352,12 @@ function loyverse_delete_objects(){
         $tablename = get_option('lvs_table');
         $thedatabase = 'wp_'.$tablename;
 
+        /* For each item in database check if in Loyverse (get_loyverse_category_by_id and get_loyverse_item_by_id). If result is null then delete from Woocommerce and Databse otherwise do nothing. */
+
         /* Get all items from Databases */
         $databaseresults[] = $wpdb->get_results( "SELECT * FROM ". $thedatabase );
-        $loyversecategories[] = $this->loyverse_categories_connection();
-        $loyverseItems[] =  $this->loyverse_items_connection();
+        //$loyversecategories[] = $this->loyverse_categories_connection();
+        //$loyverseItems[] =  $this->loyverse_items_connection();
         
         $woocommerce = new Client(
             'https://mammamia.mimlab.ch',
@@ -302,7 +372,7 @@ function loyverse_delete_objects(){
 
         $found = 0;
 
-        foreach($databaseresults[0] as $dbres){
+    foreach($databaseresults[0] as $dbres){
 
             $found = 0;
 
@@ -319,110 +389,79 @@ function loyverse_delete_objects(){
 
             /*print_r($dbres);*/
 
-            if($desc == 'Category'){
+           if($desc == 'Category'){
 
-                foreach($loyversecategories[0] as $lv_cat){
+            if(strlen($this->get_loyverse_category_by_id_for_delete($lvid)) == 0){
 
-                    foreach($lv_cat as $category){   
-            
-                        $loyverse_cat_id = $category['id'];
+                    //Categorie exists
+                    ?>
         
-                        if($lvid ===$loyverse_cat_id ){
-        
-                            ?>
-        
-                            <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
-                        
-                        <?php 
-                        
-                            $this ->write_to_loyverse_sync_log('Category '. $lvname .' still exists. Skipping...');
-                            $found = 1;
-                            break;
-                        }
-                        
-                    }
-                }
+                    <pre> Category <?php echo $lvname ?> still exists. Skipping...</pre>
+                
+                    <?php 
+                    $this ->write_to_loyverse_sync_log('Category '. $lvname .' still exists. Skipping...');
 
             }
-
-            if($found == 0 && $desc == 'Category'){
-
+            else{
                 ?>
             
                 <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
             
                 <?php
-
                 $this ->write_to_loyverse_sync_log('Category '. $lvname .' does not exist anymore. Deleting...');
                 /* Delete catagory in Woocommerce */
                 $url = 'products/categories/'.$wcid;
                 /*print_r($url);*/
                 $woocommerce->delete($url, ['force' => true]);
-                $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
-        
+                $wpdb->delete( $thedatabase, array( 'lv_sync_id' => $lvsyncid ) );
                 ?>
         
                 <pre> Category <?php echo $lvname ?> deleted...</pre>
             
                 <?php 
-                $this ->write_to_loyverse_sync_log('Category '. $lvname .' deleted...');           
-                $found = 0;
+                $this ->write_to_loyverse_sync_log('Category '. $lvname .' deleted...');
 
             }
-
-            if($desc == 'Item'){
-
-                foreach($loyverseItems[0] as $lv_item){
-
-                    foreach($lv_item as $item){   
-            
-                        $loyverse_item_id = $item['id'];
-        
-                        if($lvid ===$loyverse_item_id ){
-        
-                            ?>
-        
-                            <pre> Item <?php echo $lvname ?> still exists. Skipping...</pre>
-                        
-                        <?php  
-                            $this ->write_to_loyverse_sync_log('Item '. $lvname .' still exists. Skipping...');
-                            $found = 1;
-                            break;
-                        }
-                                            
-                    }
-                }
-
-            }       
-
-            if($found == 0 && $desc == 'Item'){
-
-                ?>
-            
-                <pre> Item <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
-            
-                <?php
-
-                $this ->write_to_loyverse_sync_log('Item '. $lvname .' does not exist anymore. Deleting...');
-                /* Delete Item in Woocommerce */
-                $url = 'products/'.$wcid;
-                /*print_r($url);*/
-                $woocommerce->delete($url, ['force' => true]);
-                $wpdb->delete( 'wp_lv_sync', array( 'lv_sync_id' => $lvsyncid ) );
-        
-                ?>
-        
-                <pre> Item <?php echo $lvname ?> deleted...</pre>
-            
-                <?php 
-                $this ->write_to_loyverse_sync_log('Item '. $lvname .' deleted...');           
-                $found = 0;
-
-            }
-            
         }
 
+            if($desc == 'Item'){
+                if(strlen($this->get_loyverse_item_by_id($lvid)) == 0){
+                
+                    ?>
+        
+                    <pre> Item <?php echo $lvname ?> still exists. Skipping...</pre>
+                
+                    <?php  
+                    $this ->write_to_loyverse_sync_log('Item '. $lvname .' still exists. Skipping...');                
+                
+                }
+                else{
+                    ?>
+            
+                    <pre> Item <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
+                
+                    <?php
+    
+                    $this ->write_to_loyverse_sync_log('Item '. $lvname .' does not exist anymore. Deleting...');
+                    /* Delete Item in Woocommerce */
+                    $url = 'products/'.$wcid;
+                    /*print_r($url);*/
+                    $woocommerce->delete($url, ['force' => true]);
+                    $wpdb->delete( $thedatabase, array( 'lv_sync_id' => $lvsyncid ) );
+            
+                    ?>
+            
+                    <pre> Item <?php echo $lvname ?> deleted...</pre>
+                
+                    <?php 
+                    $this ->write_to_loyverse_sync_log('Item '. $lvname .' deleted...');
+
+                }
+            }
     }
+
+}
+
 function loyverse_sync(){ ?>  
 
     <div class ="wrap">
@@ -543,6 +582,7 @@ function loyverse_sync(){ ?>
             $sql = "SELECT * FROM ". $thedatabase;
             $queryresults = $wpdb->get_results($sql);
             $found = 0;
+            $error = 0;
             $this ->write_to_loyverse_sync_log('Got all categories from database... ');
 
             foreach($queryresults as $qres){ 
@@ -559,8 +599,21 @@ function loyverse_sync(){ ?>
                                 ];
                             $url = 'products/categories/'.$qres->wc_id;
                             /* Add check */
+                            try{
                             $woocommerce->put( $url, $prod_data );
+                            }
+                            catch (Exception $e){
 
+                                //echo $e->getMessage();
+                                ?>        
+                                <pre> Category <?php echo $category['name'] ?> does not exist in Woocommerce but exists in the database. Delete it from the database <?php echo $tablename ?> and try synching again. </pre>
+                            <?php 
+                                //$this ->write_to_loyverse_sync_log($e->getMessage());
+                                $this ->write_to_loyverse_sync_log('Category ' . $category['name'] . ' does not exist in Woocommerce. Delete it from the database ' . $tablename . ' and try synching again.');
+                                $error = 1;
+                                break;
+                                
+                            }
                             $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $category['id'] ));
 
                         ?>        
@@ -577,7 +630,7 @@ function loyverse_sync(){ ?>
             }
             
 
-            if($found == 0)
+            if(($found == 0) && ($error == 0))
             {
 
             /**   Create stuff for woocommerce category */
@@ -656,13 +709,13 @@ function loyverse_sync(){ ?>
                                         
                     foreach($queryresults as $qres){ 
                     
-                    $found = 0;
+                    $found1 = 0;
 
                     if($qres->lv_id===$item['category_id']){
                         
                         $wcid=$qres->wc_id;
 
-                        $found = $found + 1;
+                        $found1 = $found1 + 1;
 
                             break;
 
@@ -672,6 +725,7 @@ function loyverse_sync(){ ?>
 
                     /** Check if data already in Woocommerce */
                     $found = 0;
+                    $error = 0;
 
                     foreach($queryresults as $qres){ 
                
@@ -707,8 +761,21 @@ function loyverse_sync(){ ?>
                                 'lv_name' => $loyverse_item_name
                                 ];
                             $url = 'products/'.$qres->wc_id;
+                            try{
                             $woocommerce->put( $url, $prod_data );
+                            }
+                            catch(Exception $e) {
 
+                                //echo $e->getMessage();
+                                ?>        
+                                <pre> Product <?php echo $loyverse_item_name ?> does not exist in Woocommerce. Delete it from the database <?php echo $tablename ?> and try synching again.</pre>
+                            <?php 
+                                //$this ->write_to_loyverse_sync_log($e->getMessage());
+                                $this ->write_to_loyverse_sync_log('Product ' . $loyverse_item_name . ' does not exist in Woocommerce. Delete it from the database '. $tablename . ' and try synching again.');
+                                $error = 1;
+                                break;
+          
+                            }
                             $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $loyverse_item_id));
 
                         ?>        
@@ -725,7 +792,7 @@ function loyverse_sync(){ ?>
                     }
 
 
-                            if($found == 0){
+                            if(($found == 0) && ($error == 0)){
                                 /** Create stuff for woocommerce product */
                                 $prod_data = [
                                     'name'          => $loyverse_item_name,
