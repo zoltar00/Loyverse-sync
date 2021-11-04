@@ -311,6 +311,7 @@ function get_loyverse_category_by_id_for_delete($catid){
     )));
 
 
+    /*print_r($responsecat);*/
     
     $datacat = json_decode($responsecat,true);
      
@@ -351,7 +352,7 @@ function loyverse_delete_objects(){
 
         $tablename = get_option('lvs_table');
         $thedatabase = 'wp_'.$tablename;
-
+        
         /* For each item in database check if in Loyverse (get_loyverse_category_by_id and get_loyverse_item_by_id). If result is null then delete from Woocommerce and Databse otherwise do nothing. */
 
         /* Get all items from Databases */
@@ -372,6 +373,7 @@ function loyverse_delete_objects(){
 
         $found = 0;
 
+       
     foreach($databaseresults[0] as $dbres){
 
             $found = 0;
