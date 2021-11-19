@@ -71,7 +71,7 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	__FILE__, //Full path to the main plugin file or functions.php.
 	'loyverse-sync'
 );
-$myUpdateChecker->setAuthentication('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');
+//$myUpdateChecker->setAuthentication('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');
 $myUpdateChecker->setBranch('release');
 
 /*Update database requirement */
