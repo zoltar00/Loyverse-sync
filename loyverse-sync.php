@@ -361,7 +361,7 @@ function loyverse_delete_objects(){
         //$loyverseItems[] =  $this->loyverse_items_connection();
         
         $woocommerce = new Client(
-            'https://mammamia.mimlab.ch',
+            get_option('siteurl'),
             get_option('lvs_wckey','1'),
             get_option('lvs_wcsecret','1'),
             [
@@ -549,7 +549,7 @@ function loyverse_sync(){ ?>
     $this ->write_to_loyverse_sync_log('Connecting to Woocommerce API... ');
 
 	$woocommerce = new Client(
-		'https://mammamia.mimlab.ch',
+		get_option('siteurl'),
 		get_option('lvs_wckey','1'),
 		get_option('lvs_wcsecret','1'),
 		[
