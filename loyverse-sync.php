@@ -228,6 +228,18 @@ function loyverse_categories_connection($cursor){
 
        }
 
+       $lvstoken = get_option('lvs_lvtoken');
+
+       if(strlen($lvstoken) == 0){
+
+        ?>        
+            <pre> Please configure it on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a> </pre>
+        <?php  
+
+        $this ->write_to_loyverse_sync_log('Loyverse Token is empty. Please configure it on the settings page.');
+        exit();
+   }
+
         //print_r($limitcat);
 
             if($cursor == 'null'){
@@ -371,7 +383,7 @@ function loyverse_delete_objects(){
         $this ->write_to_loyverse_sync_log('Starting deleted objects check!');
 
         $tablename = get_option('lvs_table');
-        $thedatabase = 'wp_'.$tablename;
+        $thedatabase = 'wp_'. str_replace('-', '_', $tablename);
         
         /* For each item in database check if in Loyverse (get_loyverse_category_by_id and get_loyverse_item_by_id). If result is null then delete from Woocommerce and Databse otherwise do nothing. */
 
@@ -498,7 +510,8 @@ function loyverse_sync(){ ?>
    
     global $wpdb;
     $tablename = get_option('lvs_table','1');
-
+    $thedatabase = 'wp_'. str_replace('-', '_', $tablename);
+    
     if($tablename == 1){
        
     ?>        
@@ -514,10 +527,10 @@ function loyverse_sync(){ ?>
         /* Check if custom table exists */
         $done = 0;
 
-        $sql = "SHOW tables LIKE 'wp_". $tablename. "';";
+        $sql = "SHOW tables LIKE '". $thedatabase. "';";
         $res = $wpdb->get_results($sql);
 
-        if(empty($res) && strlen($tablename) >0 ){
+        if(empty($res) && strlen($thedatabase) >0 ){
 
         ?>        
             <pre> Loyverse Table does not exist. Creating <?php echo $tablename ?></pre>
@@ -525,7 +538,7 @@ function loyverse_sync(){ ?>
 
             $this ->write_to_loyverse_sync_log('Loyverse Table does not exist. Creating '. $tablename);
 
-                $ddl =" CREATE TABLE wp_$tablename (
+                $ddl =" CREATE TABLE $thedatabase (
                 lv_sync_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
                 lv_id VARCHAR(100),
                 lv_name VARCHAR(100),
@@ -538,7 +551,7 @@ function loyverse_sync(){ ?>
             $done =1;
 
         }
-        if(strlen($tablename) ==0){
+        if(strlen($thedatabase) ==0){
         ?>        
             <pre> Loyverse Table <?php echo $tablename ?> cannot be an empty string. Please update on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
         <?php 
@@ -559,7 +572,7 @@ function loyverse_sync(){ ?>
 
     /*Check if custom database exists */
 
-    $thedatabase = 'wp_'.$tablename;
+    //$thedatabase = 'wp_'.$tablename;
 	$loyverse_items = [];
 
 	/**Connect to WooCommerce */
@@ -587,7 +600,7 @@ function loyverse_sync(){ ?>
     /** Connect to Loyverse to get categories*/
 
     $cursor = 'null';
-    
+    $i=0;
   do{
     if(get_option('lvs_catsync') == $i){
         
