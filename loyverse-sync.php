@@ -103,22 +103,22 @@ function settings(){
         add_settings_section('lsp_first_section',null,null,'loyverse-sync-settings-page');
         
         add_settings_field('lvs_lvtoken','Loyverse API Token',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_lvtoken'));
-        register_setting('loyversesyncplugin','lvs_lvtoken',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse API Token'));
+        register_setting('loyversesyncplugin','lvs_lvtoken',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
         add_settings_field('lvs_wckey','Woocommerce API Key',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_wckey'));
-        register_setting('loyversesyncplugin','lvs_wckey',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Key'));
+        register_setting('loyversesyncplugin','lvs_wckey',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
         add_settings_field('lvs_wcsecret','Woocommerce API Secret',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_wcsecret'));
-        register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>'Woocommerce API Secret'));
+        register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
         
         add_settings_field('lvs_table','Loyverse Custom Table Name',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_table'));
-        register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>'Loyverse Custom Table Name'));
+        register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
         
         add_settings_field('lvs_catsync','Number of categories to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_catsync'));
-        register_setting('loyversesyncplugin','lvs_catsync',array('sanitize_callback' =>'sanitize_text_field','default'=>'Number of categories to synchronize'));
+        register_setting('loyversesyncplugin','lvs_catsync',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
         add_settings_field('lvs_productsync','Number of products to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_productsync'));
-        register_setting('loyversesyncplugin','lvs_productsync',array('sanitize_callback' =>'sanitize_text_field','default'=>'Number of products to synchronize'));
+        register_setting('loyversesyncplugin','lvs_productsync',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
     }
 
@@ -213,7 +213,7 @@ function ourHTML(){ ?>
         <?php 
     }
 
-function loyverse_categories_connection(){  
+function loyverse_categories_connection($cursor){  
 
         ?>        
             <pre> Getting categories from Loyverse... </pre>
@@ -229,8 +229,18 @@ function loyverse_categories_connection(){
        }
 
         //print_r($limitcat);
+
+            if($cursor == 'null'){
+
+                $caturl = 'https://api.loyverse.com/v1.0/categories?limit='.$limitcat;
+            }
+            else{
+
+                $caturl = 'https://api.loyverse.com/v1.0/categories?limit='.$limitcat. '&cursor='. $cursor;
+            }
+
     
-        $responsecategories = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/categories?limit='.$limitcat, array(
+        $responsecategories = wp_remote_retrieve_body(wp_remote_get($caturl, array(
             'headers' => array(
                 'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
             ),
@@ -240,7 +250,7 @@ function loyverse_categories_connection(){
         return $data;
     
     }
-function loyverse_items_connection(){
+function loyverse_items_connection($cursor){
 
     ?>        
         <pre> Getting items from Loyverse... </pre>
@@ -260,7 +270,17 @@ function loyverse_items_connection(){
 
       // print_r($limititem);
 
-       $resp = wp_remote_retrieve_body(wp_remote_get('https://api.loyverse.com/v1.0/items?limit='.$limititem, array(
+      if($cursor == 'null'){
+
+        $itemurl = 'https://api.loyverse.com/v1.0/items?limit='.$limitcat;
+    }
+    else{
+
+        $itemurl = 'https://api.loyverse.com/v1.0/items?limit='.$limitcat. '&cursor='. $cursor;
+    }
+
+
+       $resp = wp_remote_retrieve_body(wp_remote_get($itemurl, array(
            'headers' => array(
                'Authorization' => 'Bearer ' . get_option('lvs_lvtoken','1')
            ),
@@ -317,7 +337,7 @@ function get_loyverse_category_by_id_for_delete($catid){
      
     return $datacat['deleted_at'];
 
-}
+ }
 
 function get_loyverse_item_by_id($itemid){
 
@@ -337,7 +357,7 @@ function get_loyverse_item_by_id($itemid){
     
     return $responseitem['deleted_at'];
 
-}
+ }
 function loyverse_delete_objects(){
 
         global $wpdb;
@@ -462,7 +482,7 @@ function loyverse_delete_objects(){
             }
     }
 
-}
+ }
 
 function loyverse_sync(){ ?>  
 
@@ -565,11 +585,19 @@ function loyverse_sync(){ ?>
 
     $this ->write_to_loyverse_sync_log('Connected to Woocommerce API... ');
     /** Connect to Loyverse to get categories*/
+
+    $cursor = 'null';
     
+  do{
+    if(get_option('lvs_catsync') == $i){
+        
+        break;
+    }
+    $loyverse_categories[] = $this->loyverse_categories_connection($cursor);
 
-    $loyverse_categories[] = $this->loyverse_categories_connection();
+    $cursor = $loyverse_categories[0]['cursor'];
 
-    /*print_r($loyverse_categories);*/
+    //print_r($loyverse_categories[0]['cursor']);
     /** Get all categories from Woocommerce */
     $this ->write_to_loyverse_sync_log('Checking all categories against database... ');
 
@@ -681,15 +709,25 @@ function loyverse_sync(){ ?>
         }
     
     }    
+    $i = $i +1;
+ }  while ($cursor);
 
-        /* Sync Products from Loyverses */
+ /* Sync Products from Loyverses */
+        $i = 0;
+        $cursor = 'null';
 
-            $loyverse_items[] = $this ->loyverse_items_connection();/** Get items from Loyverse */
+        do{
+            if(get_option('lvs_productsync') == $i){
+                
+                break;
+            }
+            $loyverse_items[] = $this ->loyverse_items_connection($cursor);/** Get items from Loyverse */
 
         ?>        
             <pre> Got all Items... </pre>
         <?php   
 
+        $cursor = $loyverse_items[0]['cursor'];
         $this ->write_to_loyverse_sync_log('Got all Items...  ');
 
         foreach ($loyverse_items[0] as $loyverse_item) {
@@ -861,6 +899,8 @@ function loyverse_sync(){ ?>
 
                 }
             }
+            $i = $i + 1;
+        } while($cursor);
             $this ->write_to_loyverse_sync_log('Deleting categories and items that are no longer in Loyverse');
             ?>   
                 <pre> Deleting categories and items that are no longer in Loyverse</pre>  <?php $this ->loyverse_delete_objects(); ?>     
