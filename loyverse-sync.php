@@ -306,11 +306,11 @@ function loyverse_items_connection($cursor){
 
       if($cursor == 'null'){
 
-        $itemurl = 'https://api.loyverse.com/v1.0/items?limit='.$limitcat;
+        $itemurl = 'https://api.loyverse.com/v1.0/items?limit='.$limititem;
     }
     else{
 
-        $itemurl = 'https://api.loyverse.com/v1.0/items?limit='.$limitcat. '&cursor='. $cursor;
+        $itemurl = 'https://api.loyverse.com/v1.0/items?limit='.$limititem. '&cursor='. $cursor;
     }
 
 
@@ -660,6 +660,8 @@ function loyverse_sync(){ ?>
     }
     
   do{
+    //print_r($i);  
+    //print_r(get_option('lvs_catsync'));
     if(get_option('lvs_catsync') == $i){
 
         break;
@@ -679,22 +681,27 @@ function loyverse_sync(){ ?>
 
     $cursor = $loyverse_categories[0]['cursor'];
 
-    //print_r($loyverse_categories[0]['cursor']);
+    //print_r($loyverse_categories);
     /** Get all categories from Woocommerce */
     $this ->write_to_loyverse_sync_log('Checking all categories against database... ');
 
     foreach($loyverse_categories[0] as $loyverse_category){
         
+        //print_r($loyverse_category);
+
         foreach($loyverse_category as $category){
 
             $loyverse_category_id = $category['id'];
-            
+  
             /** Get data from database */
 
             $sql = "SELECT * FROM ". $thedatabase;
             $queryresults = $wpdb->get_results($sql);
             $found = 0;
             $error = 0;
+            ?>        
+            <pre> Got all categories from database... </pre>
+            <?php 
             $this ->write_to_loyverse_sync_log('Got all categories from database... ');
 
             foreach($queryresults as $qres){ 
@@ -736,7 +743,7 @@ function loyverse_sync(){ ?>
 
                         $found = $found + 1;
 
-                        break;
+                        break 3;
                  }
 
             }
@@ -833,7 +840,21 @@ function loyverse_sync(){ ?>
             <pre> Got all Items... </pre>
         <?php   
 
-        $cursor = $loyverse_items[0]['cursor'];
+        //print_r($loyverse_items);
+        
+        if(isset($loyverse_items[0]['cursor']))
+        {
+            $cursor = $loyverse_items[0]['cursor'];
+        }
+        else{
+
+            ?>        
+                <pre> No cursor because single item. </pre>
+            <?php 
+            $this ->write_to_loyverse_sync_log('No cursor because single item. ');
+        }
+            
+        
         $this ->write_to_loyverse_sync_log('Got all Items...  ');
 
         foreach ($loyverse_items[0] as $loyverse_item) {
@@ -848,6 +869,11 @@ function loyverse_sync(){ ?>
                     $loyverse_item_price = $item['variants'][0]['default_price'];
                     $loyverse_catname = $this->get_loyverse_category_by_id($item['category_id']); 
                     $loyverse_category_slug = sanitize_title($loyverse_catname);
+
+                    ?>        
+                        <pre> Processing item <?php echo $loyverse_item_name ?>.</pre>
+                    <?php 
+                    $this ->write_to_loyverse_sync_log('Processing item '. $loyverse_item_name . '.');
 
                     /** Get Woocommerce category id from loyverse category. Get from Dataabase */
                     $sql = "SELECT * FROM ". $thedatabase;
@@ -865,6 +891,14 @@ function loyverse_sync(){ ?>
 
                             break;
 
+                        }else{
+
+                            ?>        
+                                <pre> Category <?php echo $loyverse_catname ?> is not synced yet. Cannot create product. Please change the values of the category synchronization. </pre>
+                            <?php 
+                            $this ->write_to_loyverse_sync_log('Category '. $loyverse_catname . ' is not synced yet. Cannot create product. Please change the values of the category synchronization.');
+
+                            break 3;
                         }
 
                     }
@@ -931,7 +965,7 @@ function loyverse_sync(){ ?>
                         $this ->write_to_loyverse_sync_log('Item '. $loyverse_item_name .' updated.');
                         $found = $found + 1;
 
-                        break;
+                        break 3;
 
                         }
                     
