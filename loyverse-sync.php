@@ -113,7 +113,13 @@ function settings(){
         
         add_settings_field('lvs_table','Loyverse Custom Table Name',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_table'));
         register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
+
+        add_settings_field('lvs_cat','Synchronize categories',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_cat'));
+        register_setting('loyversesyncplugin','lvs_cat',array('sanitize_callback' =>'sanitize_text_field','default'=>'1'));
         
+        add_settings_field('lvs_item','Synchronize items',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_item'));
+        register_setting('loyversesyncplugin','lvs_item',array('sanitize_callback' =>'sanitize_text_field','default'=>'1'));
+
         add_settings_field('lvs_catsync','Number of categories to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_catsync'));
         register_setting('loyversesyncplugin','lvs_catsync',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
@@ -128,6 +134,12 @@ function inputHTM($args){ ?>
 
         <?php 
     }
+function checkHTM($args){ ?>
+
+    <input type="checkbox" name="<?php echo $args['theName'] ?>" value="1" <?php checked(get_option($args['theName']),'1') ?> ></input>
+
+    <?php 
+ }
 
 function Synchschedule(){ 
         
@@ -228,16 +240,14 @@ function loyverse_categories_connection($cursor){
 
        }
 
-       $lvstoken = get_option('lvs_lvtoken');
-
-       if(strlen($lvstoken) == 0){
+       if(strlen(get_option('lvs_lvtoken')) == 0){
 
         ?>        
-            <pre> Please configure it on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a> </pre>
+            <pre>Loyverse Token is empty. Please configure it on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a> </pre>
         <?php  
 
         $this ->write_to_loyverse_sync_log('Loyverse Token is empty. Please configure it on the settings page.');
-        exit();
+        exit;
    }
 
         //print_r($limitcat);
@@ -279,6 +289,18 @@ function loyverse_items_connection($cursor){
             $limititem = 50;
 
        }
+
+       $lvstoken = get_option('lvs_lvtoken');
+
+       if(strlen($lvstoken) == 0){
+
+        ?>        
+            <pre>Loyverse Token is empty. Please configure it on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a> </pre>
+        <?php  
+
+        $this ->write_to_loyverse_sync_log('Loyverse Token is empty. Please configure it on the settings page.');
+        exit;
+   }       
 
       // print_r($limititem);
 
@@ -581,10 +603,32 @@ function loyverse_sync(){ ?>
     <?php    
     $this ->write_to_loyverse_sync_log('Connecting to Woocommerce API... ');
 
+    if(strlen(get_option('lvs_wckey')) == 0)
+    {
+
+        ?>        
+        <pre> Woocommerce key does not exist. Please update on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
+    <?php 
+    
+    $this ->write_to_loyverse_sync_log('Woocommerce key does not exist. Please update on the settings page.');
+    exit;
+
+    }
+    if(strlen(get_option('lvs_wcsecret')) == 0)
+    {
+
+        ?>        
+        <pre> Woocommerce secret does not exist. Please update on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
+    <?php 
+    
+    $this ->write_to_loyverse_sync_log('Woocommerce secret does not exist. Please update on the settings page.');
+    exit;
+
+    }    
 	$woocommerce = new Client(
 		get_option('siteurl'),
-		get_option('lvs_wckey','1'),
-		get_option('lvs_wcsecret','1'),
+		get_option('lvs_wckey'),
+		get_option('lvs_wcsecret'),
 		[
 			'wp_api' => true,
 			'version' => 'wc/v3',
@@ -598,14 +642,39 @@ function loyverse_sync(){ ?>
 
     $this ->write_to_loyverse_sync_log('Connected to Woocommerce API... ');
     /** Connect to Loyverse to get categories*/
-
+    
     $cursor = 'null';
     $i=0;
+
+    //CHeck if categories sync is checked and that sync limit is not empty
+
+    if(get_option('lvs_cat') == 1 && strlen(get_option('lvs_catsync')) < 1){
+
+        ?>        
+        <pre> The number of categories to synchronize is not set. Please update on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
+    <?php 
+    
+    $this ->write_to_loyverse_sync_log('The number of categories to synchronize is not set. Please update on the settings page.');
+     exit;   
+
+    }
+    
   do{
     if(get_option('lvs_catsync') == $i){
-        
+
         break;
     }
+
+    
+    if(strlen(get_option('lvs_cat')) == 0){
+        
+        ?>        
+            <pre> Categories sync unchecked. </pre>
+        <?php  
+        $this ->write_to_loyverse_sync_log('Categories sync unchecked. ');
+        break;
+    }
+
     $loyverse_categories[] = $this->loyverse_categories_connection($cursor);
 
     $cursor = $loyverse_categories[0]['cursor'];
@@ -729,11 +798,35 @@ function loyverse_sync(){ ?>
         $i = 0;
         $cursor = 'null';
 
+    //CHeck if categories sync is checked and that sync limit is not empty
+
+    if(get_option('lvs_item') == 1 && strlen(get_option('lvs_productsync')) < 1){
+
+        ?>        
+        <pre> The number of products to synchronize is not set. Please update on the <a href='./options-general.php?page=loyverse-sync-settings-page'>settings page.</a></pre>
+    <?php 
+    
+    $this ->write_to_loyverse_sync_log('The number of products to synchronize is not set. Please update on the settings page.');
+     exit;   
+
+    }        
+
         do{
             if(get_option('lvs_productsync') == $i){
                 
                 break;
             }
+
+            if(strlen(get_option('lvs_item')) == 0){
+        
+                ?>        
+                    <pre> Items sync unchecked </pre>
+                <?php  
+                $this ->write_to_loyverse_sync_log('Items sync unchecked. ');
+                break;
+            }
+        
+
             $loyverse_items[] = $this ->loyverse_items_connection($cursor);/** Get items from Loyverse */
 
         ?>        
