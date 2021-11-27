@@ -748,7 +748,7 @@ function loyverse_sync(){ ?>
                                 <?php 
                                 //$this ->write_to_loyverse_sync_log($e->getMessage());
                                 $this ->write_to_loyverse_sync_log('Category ' . $category['name'] . ' does not exist in Woocommerce. Putting it back.');
-                                
+                                try{
                                 $woocommerce->post( 'products/categories', $prod_data );
                                 (array) $thecategory = $woocommerce->get('products/categories',['search' => sanitize_title($category['name'])]);
                             
@@ -761,6 +761,28 @@ function loyverse_sync(){ ?>
 
                                 $error=1;
                                 break;
+                                }
+                                catch(Exception $e){
+                                 
+                                    ?>        
+                                    <pre> Just updating category <?php echo $category['name'] ?> in database. </pre>
+                                <?php
+
+                                $this ->write_to_loyverse_sync_log('Just updating category ' . $category['name'] . ' in database.');   
+                                
+                                (array) $thecategory = $woocommerce->get('products/categories',['search' => sanitize_title($category['name'])]);
+                                                            
+                                $db_data1 = [
+                                    'wc_id' => $thecategory[0] ->id
+                                    ];
+                                    
+                                $wpdb->update( $thedatabase , $db_data1, array( 'lv_id' => $category['id'] ));
+
+
+                                $error=1;
+                                break;
+
+                                }
                                 
                             }
                             $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $category['id'] ));
