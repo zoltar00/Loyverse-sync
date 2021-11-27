@@ -749,33 +749,18 @@ function loyverse_sync(){ ?>
                                 //$this ->write_to_loyverse_sync_log($e->getMessage());
                                 $this ->write_to_loyverse_sync_log('Category ' . $category['name'] . ' does not exist in Woocommerce. Putting it back.');
                                 
-                                
-                                ?>        
-                                    <pre> Sending category <?php echo $category['name'] ?> to woocommerce... </pre>
-                                <?php    
-            
-                            $this ->write_to_loyverse_sync_log('Sending category '.$category['name'].' to woocommerce... ');
-                            try{
-                            $woocommerce->post( 'products/categories', $prod_data );  
-                            $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $category['id'] )); 
-                            }
-                            catch(Exception $e){
-                                ?>        
-                                <pre> Category <?php echo $category['name'] ?> already exists in Woocommerce. Skipping. </pre>
-                            <?php    
-    
-                                $this ->write_to_loyverse_sync_log('Category '.$category['name'].' already exists in Woocommerce. Skipping. ');  
-                                $error = 1; 
-                                break;
+                                $woocommerce->post( 'products/categories', $prod_data );
+                                (array) $thecategory = $woocommerce->get('products/categories',['search' => sanitize_title($category['name'])]);
+                            
+                                $db_data1 = [
+                                    'wc_id' => $thecategory[0] ->id
+                                    ];
+                                    
+                                $wpdb->update( $thedatabase , $db_data1, array( 'lv_id' => $category['id'] ));
 
-                            }
-                            ?>        
-                                <pre> Category <?php echo $category['name'] ?> sent to woocommerce... </pre>
-                            <?php    
-    
-                                $this ->write_to_loyverse_sync_log('Category '.$category['name'].' sent to woocommerce... ');                            
-                            $error = 1;
-                            break;
+
+                                $error=1;
+                                break;
                                 
                             }
                             $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $category['id'] ));
