@@ -394,7 +394,7 @@ function get_loyverse_item_by_id($itemid){
     
     $datacat = json_decode($responseitem,true);
     
-    return $responseitem['deleted_at'];
+    return $datacat['deleted_at'];
 
  }
 function loyverse_delete_objects(){
