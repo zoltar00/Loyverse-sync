@@ -953,10 +953,11 @@ function loyverse_sync(){ ?>
                     /** Check if data already in Woocommerce */
                     $found = 0;
                     $error = 0;
+                    
 
                     if($found1 >0){
                     foreach($queryresults as $qres){ 
-               
+                
                         if($qres->lv_id===$loyverse_item_id){ 
 
                             $prod_data = [
@@ -989,7 +990,23 @@ function loyverse_sync(){ ?>
                                 'lv_name' => $loyverse_item_name
                                 ];
                             $url = 'products/'.$qres->wc_id;
-                            //print_r($url);
+                            // Check if item is in trash
+                            
+                            try{
+                                $woocommerce->get($url);
+                            }
+                            catch(Exception $e){
+
+                                ?>        
+                                    <pre> Item <?php echo $loyverse_item_name ?> is in Woocommerce trash. Please delete it before. </pre>
+                                <?php   
+    
+                                $this ->write_to_loyverse_sync_log('Item '. $loyverse_item_name .' is in Woocommerce trash. Please delete it before.');
+                                $error = 1;
+                                break;
+                            }
+
+
                             try{
                             $woocommerce->put( $url, $prod_data );
                             }
@@ -1020,6 +1037,7 @@ function loyverse_sync(){ ?>
                     
                     }
                 
+                    
 
                             if(($found == 0) && ($error == 0)){
                                 /** Create stuff for woocommerce product */
