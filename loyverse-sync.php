@@ -918,7 +918,7 @@ function loyverse_sync(){ ?>
                     $this ->write_to_loyverse_sync_log('Processing item '. $loyverse_item_name . '.');
 
                     /** Get Woocommerce category id from loyverse category. Get from Dataabase */
-                    $sql = "SELECT * FROM ". $thedatabase ." WHERE lv_desc = 'Item'";
+                    $sql = "SELECT * FROM ". $thedatabase ;
                     $queryresults = $wpdb->get_results($sql);
                     
                     $found1 = 0;
@@ -927,7 +927,7 @@ function loyverse_sync(){ ?>
 
                     foreach($queryresults as $qres){ 
                     
-                        if($qres->lv_id===$loyverse_item_id){
+                        if($qres->lv_id===$item['category_id']){
                             
                             $wcid=$qres->wc_id;
 
@@ -939,6 +939,8 @@ function loyverse_sync(){ ?>
                         
 
                     }
+
+                    //print_r($found1);
 
                     if($found1 ==0){
 
@@ -991,37 +993,68 @@ function loyverse_sync(){ ?>
                                 ];
                             $url = 'products/'.$qres->wc_id;
                             // Check if item is in trash
-                            
+                            //print_r($url);
+                            $titem = array();
                             try{
-                                $woocommerce->get($url);
-                            }
-                            catch(Exception $e){
+                           $titem = $woocommerce->get($url);
 
+                           if($titem->status ==  'trash'){
+                                
                                 ?>        
                                     <pre> Item <?php echo $loyverse_item_name ?> is in Woocommerce trash. Please delete it before. </pre>
                                 <?php   
-    
+
                                 $this ->write_to_loyverse_sync_log('Item '. $loyverse_item_name .' is in Woocommerce trash. Please delete it before.');
                                 $error = 1;
                                 break;
+                            
+                                }
+                                
                             }
-
+                            catch (HttpClientException $e) {
+                               ?>        
+                                    <pre> Item not in Trash </pre>
+                                <?php  
+                                $error = 1;
+                            }
 
                             try{
                             $woocommerce->put( $url, $prod_data );
                             }
-                            catch(Exception $e) {
+                            catch(HttpClientException $e) {
 
-                                //echo $e->getMessage();
+                                    //echo $e->getMessage();
+                                    ?>        
+                                    <pre> Product <?php echo $loyverse_item_name ?> does not exist in Woocommerce but exists in the database. Putting it back.</pre>
+                                <?php 
+                                    //$this ->write_to_loyverse_sync_log($e->getMessage());
+                                    $this ->write_to_loyverse_sync_log('Product ' . $loyverse_item_name . ' does not exist in Woocommerce. but exists in the database. Putting it back.');
+
                                 ?>        
-                                <pre> Product <?php echo $loyverse_item_name ?> does not exist in Woocommerce. Delete it from the database <?php echo $tablename ?> and try synching again.</pre>
-                            <?php 
-                                //$this ->write_to_loyverse_sync_log($e->getMessage());
-                                $this ->write_to_loyverse_sync_log('Product ' . $loyverse_item_name . ' does not exist in Woocommerce. Delete it from the database '. $tablename . ' and try synching again.');
+                                    <pre> Sending item <?php echo $loyverse_item_slug ?> to woocommerce...</pre>
+                                <?php      
+                                
+                                $this ->write_to_loyverse_sync_log('Sending item '. $loyverse_item_slug .' to woocommerce...');
+                                /**Send to WooCommerce */
+                                $woocommerce->post( 'products', $prod_data );
+                                (array) $theitem = $woocommerce->get('products',['search' => $loyverse_item_slug]);
+
+                                /* update the  database wp_lv_sync */
+
+                                $db_data = array(
+                                    'lv_id' => $loyverse_item_id,
+                                    'lv_name' => $loyverse_item_name,
+                                    'wc_id' => $theitem[0] ->id,
+                                    'lv_desc' => 'Item'
+                                );
+
+                                $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $loyverse_item_id));
                                 $error = 1;
                                 break;
           
                             }
+
+
                             $wpdb->update( $thedatabase , $db_data, array( 'lv_id' => $loyverse_item_id));
 
                         ?>        
@@ -1037,9 +1070,8 @@ function loyverse_sync(){ ?>
                     
                     }
                 
-                    
+                    if(($found == 0) && ($error == 0)){
 
-                            if(($found == 0) && ($error == 0)){
                                 /** Create stuff for woocommerce product */
                                 $prod_data = [
                                     'name'          => $loyverse_item_name,
