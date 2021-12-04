@@ -369,13 +369,25 @@ function get_loyverse_category_by_id_for_delete($catid){
         ),
     )));
 
-
-    /*print_r($responsecat);*/
     
     $datacat = json_decode($responsecat,true);
-     
-    return $datacat['deleted_at'];
 
+    if($datacat['errors'][0]['code'] == 'NOT_FOUND'){
+
+        ?>
+
+        <pre> Category does not exist! </pre>
+
+        <?php
+        $datareturn = 'null';
+        return $datareturn;
+
+    }
+    else{
+     
+        $datareturn = $datacat['deleted_at'];
+        return $datareturn;
+    }
  }
 
 function get_loyverse_item_by_id($itemid){
@@ -471,10 +483,17 @@ function loyverse_delete_objects(){
                 <?php
                 $this ->write_to_loyverse_sync_log('Category '. $lvname .' does not exist anymore. Deleting...');
                 /* Delete catagory in Woocommerce */
+                try{
                 $url = 'products/categories/'.$wcid;
                 /*print_r($url);*/
                 $woocommerce->delete($url, ['force' => true]);
                 $wpdb->delete( $thedatabase, array( 'lv_sync_id' => $lvsyncid ) );
+                }
+                catch(Exception $e){
+
+                    $wpdb->delete( $thedatabase, array( 'lv_sync_id' => $lvsyncid ) );
+
+                }
                 ?>
         
                 <pre> Category <?php echo $lvname ?> deleted...</pre>
@@ -908,7 +927,7 @@ function loyverse_sync(){ ?>
                     $loyverse_item_name = $item['item_name'];
                     $loyverse_item_img_url = $item['image_url'];
                     $variant_sku = $item['variants'][0]['sku'];
-                    $loyverse_item_price = $item['variants'][0]['default_price'];
+                    $loyverse_item_price = $item['variants'][0]['stores'][0]['price'];
                     $loyverse_catname = $this->get_loyverse_category_by_id($item['category_id']); 
                     $loyverse_category_slug = sanitize_title($loyverse_catname);
 
