@@ -1033,10 +1033,22 @@ function loyverse_sync(){ ?>
                            if($titem->status ==  'trash'){
                                 
                                 ?>        
-                                    <pre> Item <?php echo $loyverse_item_name ?> is in Woocommerce trash. Please delete it before. </pre>
+                                    <pre> Item <?php echo $loyverse_item_name ?> is in Woocommerce trash. Taking it out. </pre>
                                 <?php   
 
-                                $this ->write_to_loyverse_sync_log('Item '. $loyverse_item_name .' is in Woocommerce trash. Please delete it before.');
+                                $this ->write_to_loyverse_sync_log('Item '. $loyverse_item_name .' is in Woocommerce trash. Taking it out.');
+
+                                $trash_data = [
+                                    'status'=> 'publish'
+                                ];
+
+                                $woocommerce->put( $url, $trash_data );
+                                ?>        
+                                    <pre> Item <?php echo $loyverse_item_name ?> published again. </pre>
+                                <?php   
+
+                                $this ->write_to_loyverse_sync_log('Item '. $loyverse_item_name .' published again.');
+
                                 $error = 1;
                                 break;
                             
