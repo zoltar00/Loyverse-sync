@@ -730,18 +730,8 @@ function loyverse_sync(){ ?>
     $loyverse_categories = [];
     $loyverse_categories[] = $this->loyverse_categories_connection($cursor);
 
-    if(isset($loyverse_categories[0]['cursor'])){
-        $cursor = $loyverse_categories[0]['cursor'];
-    }
-    else{
+    $cursor = $loyverse_categories[0]['cursor'];
 
-        ?>        
-            <pre> No More cursor to process. </pre>
-        <?php  
-        $this ->write_to_loyverse_sync_log(' No More cursor to process.');
-        break;
-    }
-    //print_r($loyverse_categories);
     /** Get all categories from Woocommerce */
     $this ->write_to_loyverse_sync_log('Checking all categories against database... ');
 
@@ -945,18 +935,7 @@ function loyverse_sync(){ ?>
         /** Get items from Loyverse */
             $loyverse_items = [];
             $loyverse_items[] = $this ->loyverse_items_connection($cursor);
-
-            if(isset($loyverse_items[0]['cursor'])){
-                $cursor = $loyverse_items[0]['cursor'];
-            }
-            else{
-        
-                ?>        
-                    <pre> No More cursor to process. </pre>
-                <?php  
-                $this ->write_to_loyverse_sync_log(' No More cursor to process.');
-                break;
-            }
+            $cursor = $loyverse_items[0]['cursor'];
 
         ?>        
             <pre> Got all Items from Loyverse... </pre>
@@ -966,7 +945,7 @@ function loyverse_sync(){ ?>
         //print_r($loyverse_items);
         foreach ($loyverse_items[0] as $loyverse_item) {
 
-                
+
                 foreach($loyverse_item as $item){
 
                     //print_r($item);
