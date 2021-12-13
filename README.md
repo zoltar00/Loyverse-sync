@@ -10,7 +10,7 @@ Prerequistites:
 ![image](https://user-images.githubusercontent.com/32526436/138573861-b4eab01e-9cb2-44c0-a8dc-3d36535dc600.png)
 
 - The plugin uses automattic for Woocommerce: https://packagist.org/packages/automattic/woocommerce
-- Featured Image by URL (This must be installed and activated. The plugin will not activate if this plugin is nto active. More details on the plugin: https://wordpress.org/plugins/featured-image-by-url/)
+- Featured Image by URL (This must be installed and activated. The plugin will not activate if this plugin is not active. More details on the plugin: https://wordpress.org/plugins/featured-image-by-url/)
 
 The plugin will use a custom database to store some information used for the synchronization.
 Normally there is no Access to configure. If the database is not present the plugin will create it for you.
@@ -36,3 +36,14 @@ The schedule is automatically activated when you activate the pluging it also de
 There is a log viewer (Tools -> Loyverse Sync Log) which refreshes at every sync run. 
 
 You can manually trigger a synchronization by going to Tools -> Loyverse Sync
+
+> The Synchronization is done for now only in one way: Loyverse to Woocommerce. The bidirectionnal synchronization will be done in a futur release.
+> The synchronization creates a database table (The name you can choose on the settings page). This database is used to track the differences between Loyverse and Woocommerce.
+> The synchronization checks if the item/category has been deleted from Woocommerce and if this is the case puts it back. Also the synchronization checks whether the item (product) is i nthe Woocommerce trash, if it is then the item will be restored.
+
+The synchronization process:
+The synchronization process is as follows:
+1) Import all categories from Loyverse and check against the database and delete any category that is in woocommerce but not in Loyverse.
+2) Do the same for the items
+3) Synchronize the Categories with Woocommerce
+4) Synchronize the Items with Woocommerce.
