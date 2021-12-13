@@ -752,13 +752,12 @@ function loyverse_sync(){ ?>
 
     foreach($loyverse_categories[0] as $loyverse_category){
 
-        $found = 0;
-        $error = 0;
-
         foreach($loyverse_category as $category){
 
             print_r($category['name']);
             
+            $found = 0;
+            $error = 0;
 
             $loyverse_category_id = $category['id'];
   
