@@ -732,6 +732,8 @@ function loyverse_sync(){ ?>
 
     $cursor = $loyverse_categories[0]['cursor'];
 
+    print_r($cursor);
+
     /** Get all categories from Woocommerce */
     $this ->write_to_loyverse_sync_log('Checking all categories against database... ');
 
@@ -755,7 +757,7 @@ function loyverse_sync(){ ?>
 
         foreach($loyverse_category as $category){
 
-            //print_r($category['name']);
+            print_r($category['name']);
             
 
             $loyverse_category_id = $category['id'];
