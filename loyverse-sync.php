@@ -747,14 +747,9 @@ function loyverse_sync(){ ?>
     <?php 
     $this ->write_to_loyverse_sync_log('Got all categories from database... ');
 
-    //print_r(count($loyverse_categories));
-
-
     foreach($loyverse_categories[0] as $loyverse_category){
 
         foreach($loyverse_category as $category){
-
-            print_r($category['name']);
             
             $found = 0;
             $error = 0;
