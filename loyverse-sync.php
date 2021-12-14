@@ -380,7 +380,7 @@ function get_loyverse_category_by_id_for_delete($catid){
         <pre> Category does not exist! </pre>
 
         <?php
-        $datareturn = 'null';
+        $datareturn = 'notfound';
         return $datareturn;
 
     }
@@ -406,9 +406,24 @@ function get_loyverse_item_by_id($itemid){
 
     
     $datacat = json_decode($responseitem,true);
-    
-    return $datacat['deleted_at'];
 
+    if(in_array('NOT_FOUND',$datacat)){
+
+        ?>
+
+        <pre> Item does not exist! </pre>
+
+        <?php
+        $datareturn = 'notfound';
+        return $datareturn;
+
+    }
+    else{
+     
+        $datareturn = $datacat['deleted_at'];
+        return $datareturn;
+    }
+    
  }
 function loyverse_delete_objects(){
 
@@ -461,11 +476,13 @@ function loyverse_delete_objects(){
             $lvsyncid = $dbres->lv_sync_id;
             $desc = $dbres->lv_desc;
 
-            /*print_r($dbres);*/
+            
 
            if($desc == 'Category'){
 
-            if(strlen($this->get_loyverse_category_by_id_for_delete($lvid)) == 0){
+            //print_r($lvid);
+
+            if($this->get_loyverse_category_by_id_for_delete($lvid) == 0){
 
                     //Categorie exists
                     ?>
@@ -476,7 +493,8 @@ function loyverse_delete_objects(){
                     $this ->write_to_loyverse_sync_log('Category '. $lvname .' still exists. Skipping...');
 
             }
-            else{
+
+            if(($this->get_loyverse_category_by_id_for_delete($lvid) == 'notfound') || (strlen($this->get_loyverse_category_by_id_for_delete($lvid)) > 0)){
                 ?>
             
                 <pre> Category <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
@@ -506,7 +524,7 @@ function loyverse_delete_objects(){
         }
 
             if($desc == 'Item'){
-                if(strlen($this->get_loyverse_item_by_id($lvid)) == 0){
+                if($this->get_loyverse_item_by_id($lvid) == 0){
                 
                     ?>
         
@@ -516,7 +534,8 @@ function loyverse_delete_objects(){
                     $this ->write_to_loyverse_sync_log('Item '. $lvname .' still exists. Skipping...');                
                 
                 }
-                else{
+                
+                if(($this->get_loyverse_item_by_id($lvid) == 'notfound') || (strlen($this->get_loyverse_item_by_id($lvid)) > 0)){
                     ?>
             
                     <pre> Item <?php echo $lvname ?> does not exist anymore. Deleting...</pre>
