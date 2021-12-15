@@ -372,14 +372,8 @@ function get_loyverse_category_by_id_for_delete($catid){
     
     $datacat = json_decode($responsecat,true);
 
-    
     if(in_array('NOT_FOUND',$datacat)){
 
-        ?>
-
-        <pre> Category does not exist! </pre>
-
-        <?php
         $datareturn = 'notfound';
         return $datareturn;
 
@@ -405,24 +399,19 @@ function get_loyverse_item_by_id($itemid){
 
 
     
-    $datacat = json_decode($responseitem,true);
+    $dataitem = json_decode($responseitem,true);
 
-    if(in_array('NOT_FOUND',$datacat)){
+        if(in_array('NOT_FOUND',$dataitem[errors][0])){
 
-        ?>
+            $datareturn = 'notfound';
+            return $datareturn;
 
-        <pre> Item does not exist! </pre>
-
-        <?php
-        $datareturn = 'notfound';
-        return $datareturn;
-
-    }
-    else{
+        }
+        else{
      
-        $datareturn = $datacat['deleted_at'];
-        return $datareturn;
-    }
+            $datareturn = $dataitem['deleted_at'];
+            return $datareturn;
+        }
     
  }
 function loyverse_delete_objects(){
@@ -482,7 +471,7 @@ function loyverse_delete_objects(){
 
             //print_r($lvid);
 
-            if($this->get_loyverse_category_by_id_for_delete($lvid) == 0){
+            if(strlen($this->get_loyverse_category_by_id_for_delete($lvid)) == 0){
 
                     //Categorie exists
                     ?>
@@ -524,7 +513,8 @@ function loyverse_delete_objects(){
         }
 
             if($desc == 'Item'){
-                if($this->get_loyverse_item_by_id($lvid) == 0){
+                //print_r($this->get_loyverse_item_by_id($lvid));
+                if(strlen($this->get_loyverse_item_by_id($lvid)) == 0){
                 
                     ?>
         
