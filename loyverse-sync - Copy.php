@@ -51,15 +51,15 @@ register_activation_hook( __FILE__, 'loyversesync_plugin_activation' );
 register_deactivation_hook( __FILE__, 'loyversesync_plugin_deactivation' );
 
 function loyversesync_plugin_activation() {
- /*   
+    
         if ( ! wp_next_scheduled( 'lvs_cron' ) ) {
             wp_schedule_event( time(), 'rsssl_le_five_minutes', 'lvs_cron' );
-        }*/
+        }
 }
     
 function loyversesync_plugin_deactivation() {
-  /*      $timestamp = wp_next_scheduled( 'lvs_cron' );
-        wp_unschedule_event( $timestamp, 'lvs_cron' );*/
+        $timestamp = wp_next_scheduled( 'lvs_cron' );
+        wp_unschedule_event( $timestamp, 'lvs_cron' );
 }
 
 
@@ -85,7 +85,7 @@ function __construct(){
         add_action('admin_menu', array($this,'adminPage'));
         add_action( 'admin_init', array($this,'settings'));
         add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_settings_link' ) );
-       // add_action( 'lvs_cron', array($this,'loyverse_sync' ));
+        add_action( 'lvs_cron', array($this,'loyverse_sync' ));
 
         /*add_action('admin_menu', 'lvsync_create_menu');*/
 
@@ -111,23 +111,23 @@ function settings(){
         add_settings_field('lvs_wcsecret','Woocommerce API Secret',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_wcsecret'));
         register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
         
-        //add_settings_field('lvs_table','Loyverse Custom Table Name',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_table'));
-        //register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
+        add_settings_field('lvs_table','Loyverse Custom Table Name',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_table'));
+        register_setting('loyversesyncplugin','lvs_table',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
-        //add_settings_field('lvs_init','Initial sync',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_del'));
-        //register_setting('loyversesyncplugin','lvs_del',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
+        add_settings_field('lvs_del','Check integrity',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_del'));
+        register_setting('loyversesyncplugin','lvs_del',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
 
-        //add_settings_field('lvs_cat','Synchronize categories',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_cat'));
-        //register_setting('loyversesyncplugin','lvs_cat',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
+        add_settings_field('lvs_cat','Synchronize categories',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_cat'));
+        register_setting('loyversesyncplugin','lvs_cat',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
         
-        //add_settings_field('lvs_item','Synchronize items',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_item'));
-        //register_setting('loyversesyncplugin','lvs_item',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
+        add_settings_field('lvs_item','Synchronize items',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_item'));
+        register_setting('loyversesyncplugin','lvs_item',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
 
-        //add_settings_field('lvs_catsync','Number of categories to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_catsync'));
-        //register_setting('loyversesyncplugin','lvs_catsync',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
+        add_settings_field('lvs_catsync','Number of categories to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_catsync'));
+        register_setting('loyversesyncplugin','lvs_catsync',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
-        //add_settings_field('lvs_productsync','Number of products to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_productsync'));
-        //register_setting('loyversesyncplugin','lvs_productsync',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
+        add_settings_field('lvs_productsync','Number of products to synchronize',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_productsync'));
+        register_setting('loyversesyncplugin','lvs_productsync',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
 
     }
 
@@ -143,7 +143,7 @@ function checkHTM($args){ ?>
 
     <?php 
  }
-/*
+
 function Synchschedule(){ 
         
         $schedules = wp_get_schedules();
@@ -166,12 +166,12 @@ function Synchschedule(){
 
         <?php 
     }
-*/
+
 function adminPage(){
 
         add_options_page('Loyverse Sync Settings','Loyverse Settings','manage_options','loyverse-sync-settings-page',array($this,'ourHTML'));
-       // add_management_page('Loyverse sync', 'Loyverse sync', 'manage_options', 'loyverse-sync', array($this,'loyverse_sync'));
-      //  add_management_page('Loyverse sync log', 'Loyverse sync log', 'manage_options', 'loyverse-sync-log', array($this,'loyverse_sync_log'));
+        add_management_page('Loyverse sync', 'Loyverse sync', 'manage_options', 'loyverse-sync', array($this,'loyverse_sync'));
+        add_management_page('Loyverse sync log', 'Loyverse sync log', 'manage_options', 'loyverse-sync-log', array($this,'loyverse_sync_log'));
     
     }
 function init_loyverse_sync_log(){
@@ -226,91 +226,6 @@ function ourHTML(){ ?>
         </div>
         
         <?php 
-       global $wpdb;
-
-    //Get merchant Id from Loyverse
-    $merchurl = 'https://api.loyverse.com/v1.0/merchant/';
-    $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
-        'headers' => array(
-            'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
-        ),
-    )));
-    $data = json_decode($response,true);
-
-    $merchant_id = $data['id'];
-
-    //print_r($data['id']);
-
-    $settingsurl = 'https://mimlab.azurewebsites.net/api/settings';
-    $FunctionKey = "XJZU3XBbhgIhuow4brZDpNKb2spQgVggWPKc/gjlOfMC0N6u4M31Ug==";
-
-    // Check if already exists in Azure
-    $body = array(
-        'operation'    => 'read',
-        'merchant_id'   => $merchant_id
-    );
-
-    $args = array(
-        'headers' => array(
-            'x-function-key'=> $FunctionKey,
-            'Content-Type' => 'application/json'
-        ),
-        'body'        => json_encode($body),
-    );
-
-    $response = wp_remote_post($settingsurl,$args);
-    $data = json_decode(wp_remote_retrieve_body($response), true);
-    //print_r($data);
-   
-    if($data){
-        
-        update_option('lvs_lvtoken',$data['loyverse_secret']);
-        update_option('lvs_wckey',$data['wc_username']);
-        update_option('lvs_wcsecret',$data['wc_secret']);
-
-        //header('Location: '.$_SERVER['REQUEST_URI']);
-  
-        $loyverse_token = get_option('lvs_lvtoken','1'); 
-        $WC_user = get_option('lvs_wckey','1');
-        $WC_Secret = get_option('lvs_wcsecret','1');
- 
-        ?>    
-             <pre> Merchant already exists in Azure. Using this information:</pre>    
-             <pre> Loyverse Token <?php echo $loyverse_token ?></pre>
-             <pre> Woocommerce User <?php echo $WC_user ?></pre>
-             <pre> Woocommerce Secret <?php echo $WC_Secret ?></pre>
-             <br>
-             <pre><strong>If needed refresh page to update the values.</strong></pre>
-         <?php 
-
-    }
-    else{
-
-        print_r("Saving information.");
-        
-        $loyverse_token = get_option('lvs_lvtoken','1'); 
-        $WC_user = get_option('lvs_wckey','1');
-        $WC_Secret = get_option('lvs_wcsecret','1');
-
-    // Send to Azure information
-    $body = array(
-        'operation'    => 'insert',
-        'merchant_id'   => $merchant_id,
-        'loyverse_secret' => $loyverse_token,
-        'wc_username' => $WC_user,
-        'wc_secret' => $WC_Secret,
-    );
-
-    $args = array(
-        'headers' => array(
-            'x-function-key'=> $FunctionKey,
-            'Content-Type' => 'application/json'
-        ),
-        'body'        => json_encode($body),
-    );
-
-    $response = wp_remote_post($settingsurl,$args);
-}
     }
 
 function loyverse_categories_connection($cursor){  
