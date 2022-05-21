@@ -205,7 +205,7 @@ function ourHTML(){ ?>
 
     //print_r($data['id']);
 
-    $settingsurl = 'https://mimlab.azurewebsites.net/api/settings';
+    $settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
     $FunctionKey = "XJZU3XBbhgIhuow4brZDpNKb2spQgVggWPKc/gjlOfMC0N6u4M31Ug==";
 
     // Check if already exists in Azure
