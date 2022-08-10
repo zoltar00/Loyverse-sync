@@ -207,11 +207,11 @@ function ourHTML(){ ?>
 
     //print_r($data['id']);
 
-    $settingsurl = 'https://mimlab.azurewebsites.net/api/settings';
-    $FunctionKey = "XJZU3XBbhgIhuow4brZDpNKb2spQgVggWPKc/gjlOfMC0N6u4M31Ug==";
+    //$settingsurl = 'https://mimlab.azurewebsites.net/api/settings';
+    //$FunctionKey = "XJZU3XBbhgIhuow4brZDpNKb2spQgVggWPKc/gjlOfMC0N6u4M31Ug==";
 
-    #$settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
-    #$FunctionKey = "E7NVnZFW5ll696hC3s0uJJCr9Y-iOenmMshzkU4nOwecAzFuuZ-IsA==";
+    $settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
+    $FunctionKey = "E7NVnZFW5ll696hC3s0uJJCr9Y-iOenmMshzkU4nOwecAzFuuZ-IsA==";
 
     // Check if already exists in Azure
     $body = array(
