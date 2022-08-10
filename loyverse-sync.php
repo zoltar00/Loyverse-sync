@@ -190,6 +190,8 @@ function ourHTML(){ ?>
     
     $url = site_url();
 
+    //print_r($url);
+
     global $wpdb;
 
     //Get merchant Id from Loyverse
@@ -205,8 +207,11 @@ function ourHTML(){ ?>
 
     //print_r($data['id']);
 
-    $settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
-    $FunctionKey = "E7NVnZFW5ll696hC3s0uJJCr9Y-iOenmMshzkU4nOwecAzFuuZ-IsA==";
+    $settingsurl = 'https://mimlab.azurewebsites.net/api/settings';
+    $FunctionKey = "XJZU3XBbhgIhuow4brZDpNKb2spQgVggWPKc/gjlOfMC0N6u4M31Ug==";
+
+    #$settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
+    #$FunctionKey = "E7NVnZFW5ll696hC3s0uJJCr9Y-iOenmMshzkU4nOwecAzFuuZ-IsA==";
 
     // Check if already exists in Azure
     $body = array(
@@ -220,12 +225,27 @@ function ourHTML(){ ?>
             'Content-Type' => 'application/json'
         ),
         'body'        => json_encode($body),
+        'timeout' => 60,
     );
 
     $response = wp_remote_post($settingsurl,$args);
-    $data = json_decode(wp_remote_retrieve_body($response), true);
-    //print_r($data);
-   
+    
+    if ( is_wp_error( $response ) ) {
+        $error_message = $response->get_error_message();
+        echo '<pre>';
+        echo "Something went wrong: $error_message";
+        echo '</pre>';
+        exit();
+     } else {
+        //echo 'Response:<pre>';
+        //print_r( $response );
+        //echo '</pre>';
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        //print_r("The data received from Azure Settings:");
+        //print_r($data);
+     }
+    
+    
     if($data){
           
         $loyverse_token = get_option('lvs_lvtoken','1'); 
@@ -246,7 +266,7 @@ function ourHTML(){ ?>
             'wc_username' => $WC_user,
             'wc_secret' => $WC_Secret,
             'sync_cat' => $sync_cat,
-            'site_url' => $url,
+            'site_url' => $url
         );
 
         $args = array(
@@ -255,17 +275,32 @@ function ourHTML(){ ?>
                 'Content-Type' => 'application/json'
             ),
             'body'        => json_encode($body),
+            'timeout' => 60,
         );
     
         $response = wp_remote_post($settingsurl,$args);
 
+        if ( is_wp_error( $response ) ) {
+            $error_message = $response->get_error_message();
+            echo '<pre>';
+            echo "Something went wrong: $error_message";
+            echo '</pre>';
+            exit();
+        } else {
+            //echo 'Response:<pre>';
+            //print_r( $response );
+            //echo '</pre>';
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+            //print_r("The data received from Azure Settings:");
+            //print_r($data);
+     }
 
     }
     else{
 
         //print_r("Saving information.");
         ?>    
-             <pre> Saving information.</pre>
+             <pre> No Merchant found. Saving information.</pre>
          <?php 
         
         $loyverse_token = get_option('lvs_lvtoken','1'); 
@@ -281,6 +316,7 @@ function ourHTML(){ ?>
         'wc_username' => $WC_user,
         'wc_secret' => $WC_Secret,
         'sync_cat' => $sync_cat,
+        'site_url' => $url,
     );
 
     $args = array(
@@ -289,9 +325,24 @@ function ourHTML(){ ?>
             'Content-Type' => 'application/json'
         ),
         'body'        => json_encode($body),
+        'timeout' => 60,
     );
 
     $response = wp_remote_post($settingsurl,$args);
+    if ( is_wp_error( $response ) ) {
+        $error_message = $response->get_error_message();
+        echo '<pre>';
+        echo "Something went wrong: $error_message";
+        echo "Please try again to save!";
+        echo '</pre>';
+        exit();
+    }
+    else{
+
+    ?>    
+             <pre> Information saved.</pre>
+         <?php 
+    }
   }
  }
  }
