@@ -189,7 +189,27 @@ function ourHTML(){ ?>
         <?php 
     
     $url = site_url();
+    $wcwebhookurl="https://func-galaxeos.azurewebsites.net/api/WCItems";
+    $lvitemswebhook ="https://func-galaxeos.azurewebsites.net/api/items";
+    $lvstockwebhook = "https://func-galaxeos.azurewebsites.net/api/stock";
 
+    $bodywcwh = array(
+        'name'    => 'Create Product',
+        'topic'   => 'product.created',
+        'delivery_url' => $wcwebhookurl
+    );
+    $bodylvwhitems = array(
+        'url'    => $lvitemswebhook,
+        'type'   => 'items.update',
+        'status' => 'ENABLED'
+    );
+    $bodylvwhstock = array(
+        'url'    => $lvstockwebhook,
+        'type'   => 'inventory_levels.update',
+        'status' => 'ENABLED'
+    );
+
+    
     //print_r($url);
 
     global $wpdb;
@@ -237,15 +257,12 @@ function ourHTML(){ ?>
         echo '</pre>';
         exit();
      } else {
-        //echo 'Response:<pre>';
-        //print_r( $response );
-        //echo '</pre>';
+        
         $data = json_decode(wp_remote_retrieve_body($response), true);
-        //print_r("The data received from Azure Settings:");
-        //print_r($data);
+
      }
     
-    
+    # if there is a merchant
     if($data){
           
         $loyverse_token = get_option('lvs_lvtoken','1'); 
@@ -293,6 +310,7 @@ function ourHTML(){ ?>
             $data = json_decode(wp_remote_retrieve_body($response), true);
             //print_r("The data received from Azure Settings:");
             //print_r($data);
+        
      }
 
     }
@@ -342,8 +360,123 @@ function ourHTML(){ ?>
     ?>    
              <pre> Information saved.</pre>
          <?php 
+
+            # Configure Webhooks
+            ?>    
+                <pre> Configuring Webhooks.</pre>
+            <?php 
+        
+            $woocommerce = new Client(
+                $url,
+                $WC_user,
+                $WC_Secret,
+                [
+                    'wp_api' => true,
+                    'version' => 'wc/v3'
+                ]
+            );
+
+            ?>    
+                <pre> Configuring Woocommerce Webhook.</pre>
+            <?php 
+
+            $response = $woocommerce->post('webhooks', $bodywcwh);
+            if ( is_wp_error( $response ) ) {
+                $error_message = $response->get_error_message();
+                echo '<pre>';
+                echo "Something went wrong: $error_message";
+                echo "Please try again to save!";
+                echo '</pre>';
+                exit();
+            }
+            else{
+        
+            ?>    
+                     <pre> Woocommerce Webhook Created.</pre>
+                 <?php 
+            }
+
+            # Items Webhook
+
+            ?>    
+                <pre> Configuring Loyverse Items Webhook.</pre>
+            <?php 
+
+            $responseitemswebhooks = wp_remote_post('https://api.loyverse.com/v1.0/webhooks/', array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $loyverse_token,
+                    'Content-Type' => 'application/json'
+                ),
+                'blocking' => true,
+                'body'        => json_encode($bodylvwhitems),
+                'timeout' => 60,
+                
+            ));
+            
+            $response = json_decode(wp_remote_retrieve_body($responseitemswebhooks), TRUE);
+            
+            
+            //print_r($responseitemswebhooks);
+
+            if ( is_wp_error( $response ) ) {
+                $error_message = $response->get_error_message();
+                echo '<pre>';
+                echo "Something went wrong: $error_message";
+                echo "Please try again to save!";
+                echo '</pre>';
+                exit();
+            }
+            else{
+        
+            ?>    
+                     <pre> Loyverse Items Webhook Created.</pre>
+                 <?php 
+            }
+
+            # Stock Webhook
+            
+            ?>    
+                <pre> Configuring Loyverse Stock Webhook.</pre>
+            <?php 
+
+            $responsestockwebhooks = wp_remote_post('https://api.loyverse.com/v1.0/webhooks/', array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $loyverse_token,
+                    'Content-Type' => 'application/json'
+                ),
+                'blocking' => true,
+                'body'        => json_encode($bodylvwhstock),
+                'timeout' => 60,
+                
+            ));
+            
+            $response = json_decode(wp_remote_retrieve_body($responsestockwebhooks), TRUE);
+            
+            
+            //print_r($responseitemswebhooks);
+
+            if ( is_wp_error( $response ) ) {
+                $error_message = $response->get_error_message();
+                echo '<pre>';
+                echo "Something went wrong: $error_message";
+                echo "Please try again to save!";
+                echo '</pre>';
+                exit();
+            }
+            else{
+        
+            ?>    
+                     <pre> Loyverse Stock Webhook Created.</pre>
+                 <?php 
+            }
+            ?>    
+            <pre> All Webhooks configured.</pre>
+        <?php 
+
+
     }
   }
+
  }
  }
 
