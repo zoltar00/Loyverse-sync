@@ -3,7 +3,7 @@
 * Plugin Name: Loyverse-Sync
 * Plugin URI: https://github.com/zoltar00/Loyverse-sync/
 * Description: Synching of Loyverse POS to Woocommerce
-* Version: 2.0.1
+* Version: 2.0.2
 * Author: Galaxeos SàRL
 * Author URI: https://galaxeos.net/
 **/
@@ -225,11 +225,6 @@ function ourHTML(){ ?>
 
     $merchant_id = $data['id'];
 
-    //print_r($data['id']);
-
-    //$settingsurl = 'https://mimlab.azurewebsites.net/api/settings';
-    //$FunctionKey = "XJZU3XBbhgIhuow4brZDpNKb2spQgVggWPKc/gjlOfMC0N6u4M31Ug==";
-
     $settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
     $FunctionKey = "E7NVnZFW5ll696hC3s0uJJCr9Y-iOenmMshzkU4nOwecAzFuuZ-IsA==";
 
@@ -304,19 +299,14 @@ function ourHTML(){ ?>
             echo '</pre>';
             exit();
         } else {
-            //echo 'Response:<pre>';
-            //print_r( $response );
-            //echo '</pre>';
+ 
             $data = json_decode(wp_remote_retrieve_body($response), true);
-            //print_r("The data received from Azure Settings:");
-            //print_r($data);
         
      }
 
     }
     else{
 
-        //print_r("Saving information.");
         ?>    
              <pre> No Merchant found. Saving information.</pre>
          <?php 
