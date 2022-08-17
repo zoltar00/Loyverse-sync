@@ -21,6 +21,7 @@ The process of synchronization is as follows
 whenever an item is created, modified or deleted in Loyverse it is automatically (usually in 1 minute) the item will be created updated or deleted in Woocommerce. ATTN: if you modifiy anything in woocommerce it will be overwritten if you change it in Loyverse.
 
 For the categories there is no webhook however you can choose to synchronize them to Woocommerce by checking the "Synchronize categories" checkbox on the settings page.
+The synchronization is on a timer which executes every 5 minutes, so do not be worried if the categories are not synched straight away. However it is a good practive to uncheck "Synchronize categories" when done, in order not to overload the APIs.
 
 The plugin synchronizes Categories and Items from Loyverse to Woocommerce. In Woocommerce only SIMPLE products are created.
 The images for the products are not synched they are a link to the images stored in Loyverse.
@@ -35,3 +36,5 @@ Installation:
 
 The Synchronization is done for now only in one way: Loyverse to Woocommerce. The bidirectionnal synchronization will be done in a futur release.
 The synchronization checks if the item/category has been deleted from Woocommerce and if this is the case puts it back. Also the synchronization checks whether the item (product) is i nthe Woocommerce trash, if it is then the item will be restored.
+
+
