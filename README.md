@@ -12,38 +12,26 @@ Prerequistites:
 - The plugin uses automattic for Woocommerce: https://packagist.org/packages/automattic/woocommerce
 - Featured Image by URL (This must be installed and activated. The plugin will not activate if this plugin is not active. More details on the plugin: https://wordpress.org/plugins/featured-image-by-url/)
 
-The plugin will use a custom database to store some information used for the synchronization.
-Normally there is no Access to configure. If the database is not present the plugin will create it for you.
+The plugin only sets the confgiuration for the API's tokens,...
+All the synchronization is done in Azure and is shared amoung customers.
+The plugin uses the native webhooks in Loyverse and Woocommerce to send items and to update stock
+These webhooks are automatically created when you save the settings in Woocommerce
+
+The process of synchronization is as follows
+whenever an item is created, modified or deleted in Loyverse it is automatically (usually in 1 minute) the item will be created updated or deleted in Woocommerce. ATTN: if you modifiy anything in woocommerce it will be overwritten if you change it in Loyverse.
+
+For the categories there is no webhook however you can choose to synchronize them to Woocommerce by checking the "Synchronize categories" checkbox on the settings page.
 
 The plugin synchronizes Categories and Items from Loyverse to Woocommerce. In Woocommerce only SIMPLE products are created.
 The images for the products are not synched they are a link to the images stored in Loyverse.
 
 Installation:
-- Goto the releases page (https://github.com/zoltar00/Loyvserse-sync/releases/tag/v1.2.0) and download the lastest release)
+- Goto the releases page (https://github.com/zoltar00/Loyvserse-sync/releases) and download the lastest release)
 - Import the zip file in Wordpress.
 - Activate the plugin prerequisites
 - Activate the plugin
 - Configure the plugin on the settings page.
 
-Operation:
-There are 3 main parts.
-1) A main Plugin on the plugins page
-2) A Log viewer on the Tools menu
-3) A manual trigger on the Tools Menu
 
-The Plugin is scheduled to run every 5 minutes. If you would like to change the frequency of the schedule or view the schedules we recommend installing the following plugin: https://wordpress.org/plugins/wp-crontrol/ .
-The schedule is automatically activated when you activate the pluging it also deactivates if you deactivate the plugin.
-There is a log viewer (Tools -> Loyverse Sync Log) which refreshes at every sync run. 
-
-You can manually trigger a synchronization by going to Tools -> Loyverse Sync
-
-> The Synchronization is done for now only in one way: Loyverse to Woocommerce. The bidirectionnal synchronization will be done in a futur release.
-> The synchronization creates a database table (The name you can choose on the settings page). This database is used to track the differences between Loyverse and Woocommerce.
-> The synchronization checks if the item/category has been deleted from Woocommerce and if this is the case puts it back. Also the synchronization checks whether the item (product) is i nthe Woocommerce trash, if it is then the item will be restored.
-
-The synchronization process:
-The synchronization process is as follows:
-1) Import all categories from Loyverse and check against the database and delete any category that is in woocommerce but not in Loyverse.
-2) Do the same for the items
-3) Synchronize the Categories with Woocommerce
-4) Synchronize the Items with Woocommerce.
+The Synchronization is done for now only in one way: Loyverse to Woocommerce. The bidirectionnal synchronization will be done in a futur release.
+The synchronization checks if the item/category has been deleted from Woocommerce and if this is the case puts it back. Also the synchronization checks whether the item (product) is i nthe Woocommerce trash, if it is then the item will be restored.
