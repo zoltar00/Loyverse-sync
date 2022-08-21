@@ -189,9 +189,9 @@ function ourHTML(){ ?>
         <?php 
     
     $url = site_url();
-    $wcwebhookurl="https://func-galaxeos.azurewebsites.net/api/WCItems";
-    $lvitemswebhook ="https://func-galaxeos.azurewebsites.net/api/items";
-    $lvstockwebhook = "https://func-galaxeos.azurewebsites.net/api/stock";
+    $wcwebhookurl="https://sync.galaxeos.net/api/WCItems";
+    $lvitemswebhook ="https://sync.galaxeos.net/api/products";
+    $lvstockwebhook = "https://sync.galaxeos.net/api/stock";
 
     $bodywcwh = array(
         'name'    => 'Create Product',
@@ -225,8 +225,8 @@ function ourHTML(){ ?>
 
     $merchant_id = $data['id'];
 
-    $settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
-    $FunctionKey = "E7NVnZFW5ll696hC3s0uJJCr9Y-iOenmMshzkU4nOwecAzFuuZ-IsA==";
+    $settingsurl = 'https://sync.galaxeos.net/api/settings';
+    $FunctionKey = "iEHg3VSq8yHM0n_J4lPNXnmAnRqSH2oHvX-IO5o6gBiIAzFu0KLgkA==";
 
     // Check if already exists in Azure
     $body = array(
