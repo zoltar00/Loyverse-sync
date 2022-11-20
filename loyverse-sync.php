@@ -3,7 +3,7 @@
 * Plugin Name: Loyverse-Sync
 * Plugin URI: https://github.com/zoltar00/Loyverse-sync/
 * Description: Synching of Loyverse POS to Woocommerce
-* Version: 2.0.2
+* Version: 2.0.3
 * Author: Galaxeos SàRL
 * Author URI: https://galaxeos.net/
 **/
@@ -189,15 +189,15 @@ function ourHTML(){ ?>
         <?php 
     
     $url = site_url();
-    $wcwebhookurl="https://func-galaxeos.azurewebsites.net/api/WCItems";
-    $lvitemswebhook ="https://func-galaxeos.azurewebsites.net/api/items";
-    $lvstockwebhook = "https://func-galaxeos.azurewebsites.net/api/stock";
+   // $wcwebhookurl="https://sync.galaxeos.net/api/WCItems";
+    $lvitemswebhook ="https://sync.galaxeos.net/api/products";
+    $lvstockwebhook = "https://sync.galaxeos.net/api/stock";
 
-    $bodywcwh = array(
-        'name'    => 'Create Product',
-        'topic'   => 'product.created',
-        'delivery_url' => $wcwebhookurl
-    );
+   // $bodywcwh = array(
+    //    'name'    => 'Create Product',
+   //     'topic'   => 'product.created',
+   //     'delivery_url' => $wcwebhookurl
+   // );
     $bodylvwhitems = array(
         'url'    => $lvitemswebhook,
         'type'   => 'items.update',
@@ -225,8 +225,8 @@ function ourHTML(){ ?>
 
     $merchant_id = $data['id'];
 
-    $settingsurl = 'https://func-galaxeos.azurewebsites.net/api/settings';
-    $FunctionKey = "E7NVnZFW5ll696hC3s0uJJCr9Y-iOenmMshzkU4nOwecAzFuuZ-IsA==";
+    $settingsurl = 'https://sync.galaxeos.net/api/settings';
+    $FunctionKey = "iEHg3VSq8yHM0n_J4lPNXnmAnRqSH2oHvX-IO5o6gBiIAzFu0KLgkA==";
 
     // Check if already exists in Azure
     $body = array(
@@ -257,7 +257,7 @@ function ourHTML(){ ?>
 
      }
     
-    # if there is a merchant
+     # if there is a merchant
     if($data){
           
         $loyverse_token = get_option('lvs_lvtoken','1'); 
@@ -365,26 +365,6 @@ function ourHTML(){ ?>
                     'version' => 'wc/v3'
                 ]
             );
-
-            ?>    
-                <pre> Configuring Woocommerce Webhook.</pre>
-            <?php 
-
-            $response = $woocommerce->post('webhooks', $bodywcwh);
-            if ( is_wp_error( $response ) ) {
-                $error_message = $response->get_error_message();
-                echo '<pre>';
-                echo "Something went wrong: $error_message";
-                echo "Please try again to save!";
-                echo '</pre>';
-                exit();
-            }
-            else{
-        
-            ?>    
-                     <pre> Woocommerce Webhook Created.</pre>
-                 <?php 
-            }
 
             # Items Webhook
 
