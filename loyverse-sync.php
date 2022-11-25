@@ -7,6 +7,7 @@
 * Author: Galaxeos SàRL
 * Author URI: https://galaxeos.net/
 **/
+error_reporting (E_ALL ^ E_NOTICE);
 
 if (! defined('ABSPATH')) {
     die('Don\'t call this file directly.');
@@ -81,6 +82,17 @@ require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 Class LoyverseSyncPlugin {
 
 function __construct(){
+
+            /**
+         * Proper ob_end_flush() for all levels
+         *
+         * This replaces the WordPress `wp_ob_end_flush_all()` function
+         * with a replacement that doesn't cause PHP notices.
+         */
+        remove_action( 'shutdown', 'wp_ob_end_flush_all', 1 );
+        add_action( 'shutdown', function() {
+        while ( @ob_end_flush() );
+        } );
 
         add_action('admin_menu', array($this,'adminPage'));
         add_action( 'admin_init', array($this,'settings'));
@@ -214,6 +226,10 @@ function ourHTML(){ ?>
 
     global $wpdb;
 
+    ?>    
+             <pre> Getting Merchant Id from Loyverse.</pre>    
+    <?php 
+
     //Get merchant Id from Loyverse
     $merchurl = 'https://api.loyverse.com/v1.0/merchant/';
     $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
@@ -222,9 +238,20 @@ function ourHTML(){ ?>
         ),
     )));
     $data = json_decode($response,true);
+    if($data['errors']['0']['code'] == "UNAUTHORIZED" ){
 
-    $merchant_id = $data['id'];
+        ?>    
+             <pre> Cannot retrieve Merchant ID from Loyverse. Please verify the Loyverse API Token.</pre>
+             <pre><strong>Error Message: <?php echo $data['errors']['0']['code'] ?> ,<?php echo $data['errors']['0']['details'] ?></strong></pre>    
+    <?php 
+    exit();
+    }else{
 
+        $merchant_id = $data['id'];
+
+    }
+
+    
     $settingsurl = 'https://sync.galaxeos.net/api/settings';
     $FunctionKey = "iEHg3VSq8yHM0n_J4lPNXnmAnRqSH2oHvX-IO5o6gBiIAzFu0KLgkA==";
 
@@ -266,8 +293,7 @@ function ourHTML(){ ?>
         $sync_cat = get_option('lvs_cat');
  
         ?>    
-             <pre> Merchant already exists in Azure. Updating information.</pre>    
-             <br>
+             <pre> Merchant already exists in Azure. Updating information.</pre> 
              <pre><strong>If needed refresh page to update the values.</strong></pre>
          <?php 
 
