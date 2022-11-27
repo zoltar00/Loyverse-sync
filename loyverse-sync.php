@@ -3,7 +3,7 @@
 * Plugin Name: Loyverse-Sync
 * Plugin URI: https://github.com/zoltar00/Loyverse-sync/
 * Description: Synching of Loyverse POS to Woocommerce
-* Version: 2.0.4
+* Version: 2.0.5
 * Author: Galaxeos SàRL
 * Author URI: https://galaxeos.net/
 **/
