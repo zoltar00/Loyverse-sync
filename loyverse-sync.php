@@ -614,7 +614,7 @@ function ourHTML(){ ?>
 
  }
  }
-
+ ob_end_flush();
 $loyverseSyncPlugin = new LoyverseSyncPlugin();
 
 ?>
