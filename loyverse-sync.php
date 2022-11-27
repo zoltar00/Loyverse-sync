@@ -144,7 +144,7 @@ function adminPage(){
 
        add_options_page('Loyverse Sync Settings','Loyverse Settings','manage_options','loyverse-sync-settings-page',array($this,'ourHTML'));
        // add_management_page('Loyverse sync', 'Loyverse sync', 'manage_options', 'loyverse-sync', array($this,'loyverse_sync'));
-      //  add_management_page('Loyverse sync log', 'Loyverse sync log', 'manage_options', 'loyverse-sync-log', array($this,'loyverse_sync_log'));
+        add_management_page('Loyverse sync log', 'Loyverse sync log', 'manage_options', 'loyverse-sync-log', array($this,'loyverse_sync_log'));
     
     }
 function init_loyverse_sync_log(){
@@ -174,16 +174,155 @@ function write_to_loyverse_sync_log($msg){
     }
 
 function loyverse_sync_log(){
+    
+        global $wpdb;
 
-        $logFile = plugin_dir_path( __FILE__ ) . '/lvs_log.txt';
-        echo '<pre class="log">';
-        $myfile = fopen($logFile, 'r') or die(__('Unable to open log file!', 'loyverse_sync_log'));
-        echo fread($myfile, filesize($logFile));
-        fclose($myfile);
-        echo '</pre>';
+        //Put checkboxes on page
 
-    }
+        ?>
 
+        <div class ="wrap">
+            <h1>Loyverse Sync Logs</h1>
+            <form action="" method="POST">
+            <table>
+                <tr><td><input type="checkbox" name="products" value="0">Products</input></td><td><input type="checkbox" name="categories" value="0">Categories</input></td><td><input type="date" name="logdate" value="<?php echo date('Y-m-d'); ?>" /></td></tr>
+            </table>
+                <?php              
+                    submit_button('Search Logs');
+                ?>
+
+            </form>
+        </div>
+        <?php 
+
+        //Get merchant Id from Loyverse
+        $merchurl = 'https://api.loyverse.com/v1.0/merchant/';
+        $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
+            ),
+        )));
+        $data = json_decode($response,true);
+        if($data['errors']['0']['code'] == "UNAUTHORIZED" ){
+
+            ?>    
+                <pre> Cannot retrieve Merchant ID from Loyverse. Please verify the Loyverse API Token.</pre>
+                <pre><strong>Error Message: <?php echo $data['errors']['0']['code'] ?> ,<?php echo $data['errors']['0']['details'] ?></strong></pre>    
+        <?php 
+        exit();
+        }else{
+
+            $merchant_id = $data['id'];
+
+        }
+
+        # Connect to Azure Function apilogs
+        $logsurl = 'https://sync.galaxeos.net/api/apilogs';
+        $FunctionKey = "8joGg9qSqtyjCvG6rZb6-Iw4uKfZJgi0Ile-C9kRAOVyAzFu_wwRpw==";
+        //Get all logs
+        $body = array(
+            'merchant_id'   => $merchant_id
+        );
+    
+        $args = array(
+            'headers' => array(
+                'x-function-key'=> $FunctionKey,
+                'Content-Type' => 'application/json'
+            ),
+            'body'        => json_encode($body),
+            'timeout' => 60,
+        );
+    
+        $response = wp_remote_post($logsurl,$args);
+        
+        if ( is_wp_error( $response ) ) {
+            $error_message = $response->get_error_message();
+            echo '<pre>';
+            echo "Something went wrong: $error_message";
+            echo '</pre>';
+            exit();
+         } else {
+            
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+            //print_r($data);
+
+        //Filter on products of categories
+        ?>
+        <pre><table>
+            <tr><th style="text-align: center; vertical-align: middle;">Time Stamp</th><th style="text-align: center; vertical-align: middle;">Script</th><th style="text-align: center; vertical-align: middle;">Description</th></tr>
+            
+        <?php
+        
+        if(filter_has_var(INPUT_POST,'products')) {
+            foreach($data as $item){
+                $time = $item['TableTimestamp'];
+                $script = $item['script'];
+                $description = $item['description'];
+                
+                if(($script == "products") && ($time == filter_has_var(INPUT_POST,'logdate'))){
+                    ?><tr><td style="text-align: center; vertical-align: middle;">
+                    <?php
+                    echo $time;
+                    ?></td>
+                    <td style="text-align: center; vertical-align: middle;">
+                    <?php
+                    echo $script;
+                    ?></td><td style="text-align: center; vertical-align: middle;">
+                    <?php
+                    echo $description;
+                    ?></td></tr>
+                    <?php
+
+                } // End IF
+
+            } // End Foreach                    
+
+        }elseif(filter_has_var(INPUT_POST,'categories')){
+
+            foreach($data as $item){
+                $time = $item['TableTimestamp'];
+                $script = $item['script'];
+                $description = $item['description'];
+                
+                if(($script == "categories") && ($time == filter_has_var(INPUT_POST,'logdate'))){
+                    ?><tr><td style="text-align: center; vertical-align: middle;">
+                    <?php
+                    echo $time;
+                    ?></td>
+                    <td style="text-align: center; vertical-align: middle;">
+                    <?php
+                    echo $script;
+                    ?></td><td style="text-align: center; vertical-align: middle;">
+                    <?php
+                    echo $description;
+                    ?></td></tr>
+                    <?php
+
+                } //End IF
+
+            } //End Foreach
+
+        }else{
+
+            ?>    
+                        <pre>Please select which kind of logs you would like to get. Check products or categories, select a date and press "Search Logs".</pre> 
+            <?php 
+            exit();
+        } // End if
+
+        ?>
+                </table></pre>
+                
+        <?php   
+  
+        if($data == ""){
+            ?>
+                <pre><strong>No logs to show!</strong></pre>
+            <?php 
+        } //End if
+    
+    } // End Else if
+} //End function
 function ourHTML(){ ?>
     
         <div class ="wrap">
