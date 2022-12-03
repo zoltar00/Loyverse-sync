@@ -24,45 +24,28 @@ require_once( ABSPATH . 'wp-admin/includes/plugin.php');
 /*Check if Plugin is active */
 if( is_plugin_active( 'featured-image-by-url/featured-image-by-url.php' ) ) {
 	// Plugin is active
-}
-else
-{
+ }
+ else
+ {
 
     ?>        
         <pre> Plugin Featured Image by URL is not installed or active. Please activate it or install it. Instructions are <a href='https://wordpress.org/plugins/featured-image-by-url/'>here.</a></pre>
     <?php  
     exit;
-}
+ }
 
 if( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 	// Plugin is active
-}
-else
-{
+ }
+ else
+ {
 
     ?>        
         <pre> Plugin WooCommerce is not installed or active. Please activate it or install it. Instructions are <a href='https://wordpress.org/plugins/woocommerce/'>here.</a></pre>
     <?php 
     exit;
 
-}
-
-/*Schedule loyverse-sync */
-register_activation_hook( __FILE__, 'loyversesync_plugin_activation' );
-register_deactivation_hook( __FILE__, 'loyversesync_plugin_deactivation' );
-
-function loyversesync_plugin_activation() {
- /*   
-        if ( ! wp_next_scheduled( 'lvs_cron' ) ) {
-            wp_schedule_event( time(), 'rsssl_le_five_minutes', 'lvs_cron' );
-        }*/
-}
-    
-function loyversesync_plugin_deactivation() {
-  /*      $timestamp = wp_next_scheduled( 'lvs_cron' );
-        wp_unschedule_event( $timestamp, 'lvs_cron' );*/
-}
-
+ }
 
 /*Auto-update plugin */
 
@@ -83,17 +66,6 @@ Class LoyverseSyncPlugin {
 
 function __construct(){
 
-            /**
-         * Proper ob_end_flush() for all levels
-         *
-         * This replaces the WordPress `wp_ob_end_flush_all()` function
-         * with a replacement that doesn't cause PHP notices.
-         */
-        remove_action( 'shutdown', 'wp_ob_end_flush_all', 1 );
-        add_action( 'shutdown', function() {
-        while ( @ob_end_flush() );
-        } );
-
         add_action('admin_menu', array($this,'adminPage'));
         add_action( 'admin_init', array($this,'settings'));
         add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_settings_link' ) );
@@ -112,7 +84,10 @@ function plugin_settings_link($links) {
 
 function settings(){
 
-        add_settings_section('lsp_first_section',null,null,'loyverse-sync-settings-page');
+        add_settings_section('lsp_first_section','Connectivity',null,'loyverse-sync-settings-page');
+        add_settings_section('lsp_second_section','Synchronization',null,'loyverse-sync-settings-page');
+        add_settings_section('lsp_third_section','Licensing',null,'loyverse-sync-settings-page');
+        add_settings_section('lvp_first_section',null,null,'loyverse-sync-log');
         
         add_settings_field('lvs_lvtoken','Loyverse API Token',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_lvtoken'));
         register_setting('loyversesyncplugin','lvs_lvtoken',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
@@ -122,9 +97,18 @@ function settings(){
 
         add_settings_field('lvs_wcsecret','Woocommerce API Secret',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_wcsecret'));
         register_setting('loyversesyncplugin','lvs_wcsecret',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
+
+        add_settings_field('lvs_license','License key',array($this,'inputHTM'),'loyverse-sync-settings-page','lsp_third_section', array('theName' => 'lvs_license'));
+        register_setting('loyversesyncplugin','lvs_license',array('sanitize_callback' =>'sanitize_text_field','default'=>''));
         
-        add_settings_field('lvs_cat','Synchronize categories',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_first_section', array('theName' => 'lvs_cat'));
+        add_settings_field('lvs_cat','Synchronize categories',array($this,'checkHTM'),'loyverse-sync-settings-page','lsp_second_section', array('theName' => 'lvs_cat'));
         register_setting('loyversesyncplugin','lvs_cat',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
+
+        add_settings_field('lvs_log_prod','Products',array($this,'checkHTM'),'loyverse-sync-log','lvp_first_section', array('theName' => 'lvs_log_prod'));
+        register_setting('loyversesyncplugin','lvs_log_prod',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
+
+        add_settings_field('lvs_log_cat','Categories',array($this,'checkHTM'),'loyverse-sync-log','lvp_first_section', array('theName' => 'lvs_log_cat'));
+        register_setting('loyversesyncplugin','lvs_log_cat',array('sanitize_callback' =>'sanitize_text_field','default'=>'0'));
 
     }
 
@@ -147,31 +131,6 @@ function adminPage(){
         add_management_page('Loyverse sync log', 'Loyverse sync log', 'manage_options', 'loyverse-sync-log', array($this,'loyverse_sync_log'));
     
     }
-function init_loyverse_sync_log(){
-
-        $file = plugin_dir_path( __FILE__ ) . '/lvs_log.txt';
-        if(!unlink($file)){
-            echo 'Unable to delete file!';
-        }
-        else{
-            $txt = ""; 
-            $open = fopen( $file, "w" ); 
-            $write = fputs( $open, $txt );
-            fclose($open);
-        }
-    }
-
-function write_to_loyverse_sync_log($msg){
-    
-    $file = plugin_dir_path( __FILE__ ) . '/lvs_log.txt';
-        date_default_timezone_set("Europe/Zurich");
-        $time = date( "d/m/Y h:i a", time());
-        $txt = "#$time: $msg\r\n"; 
-        $open = fopen( $file, "a" ); 
-        $write = fputs( $open, $txt );
-        fclose($open);
-    
-    }
 
 function loyverse_sync_log(){
     
@@ -183,18 +142,28 @@ function loyverse_sync_log(){
 
         <div class ="wrap">
             <h1>Loyverse Sync Logs</h1>
-            <form action="" method="POST">
-            <table>
-                <tr><td><input type="checkbox" name="products" value="0">Products</input></td><td><input type="checkbox" name="categories" value="0">Categories</input></td><td><input type="date" name="logdate" value="<?php echo date('Y-m-d'); ?>" /></td></tr>
-            </table>
-                <?php              
-                    submit_button('Search Logs');
-                ?>
-
+            <pre>Please select which kind of logs you would like to get. Check products or categories, select a date and press "Search Logs".</pre>
+            <form action="options.php" method="POST"> 
+                <?php
+                    settings_fields('loyversesyncplugin');
+                    do_settings_sections('loyverse-sync-log');
+                    submit_button("Search logs");
+            ?>
             </form>
         </div>
-        <?php 
+            
+            <pre><table>
+            <tr><th style="text-align: center; vertical-align: middle;">Time Stamp</th><th style="text-align: center; vertical-align: middle;">Script</th><th style="text-align: center; vertical-align: middle;">Description</th></tr>
+            
+        <?php    
+  
+        $prods=get_option('lvs_log_prod');
+        $cat=get_option('lvs_log_cat');
 
+        if(($prods == '1') OR ($cat == '1')){
+        $merchant_id = get_transient( 'Merchant_id' );
+    
+        if ( false === $merchant_id ) {        
         //Get merchant Id from Loyverse
         $merchurl = 'https://api.loyverse.com/v1.0/merchant/';
         $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
@@ -213,9 +182,10 @@ function loyverse_sync_log(){
         }else{
 
             $merchant_id = $data['id'];
+            set_transient( 'Merchant_id', $merchant_id, 60 * 60 );
 
         }
-
+    }
         # Connect to Azure Function apilogs
         $logsurl = 'https://sync.galaxeos.net/api/apilogs';
         $FunctionKey = "8joGg9qSqtyjCvG6rZb6-Iw4uKfZJgi0Ile-C9kRAOVyAzFu_wwRpw==";
@@ -247,11 +217,7 @@ function loyverse_sync_log(){
             //print_r($data);
 
         //Filter on products of categories
-        ?>
-        <pre><table>
-            <tr><th style="text-align: center; vertical-align: middle;">Time Stamp</th><th style="text-align: center; vertical-align: middle;">Script</th><th style="text-align: center; vertical-align: middle;">Description</th></tr>
-            
-        <?php
+        
         
         if(filter_has_var(INPUT_POST,'products')) {
             foreach($data as $item){
@@ -302,13 +268,7 @@ function loyverse_sync_log(){
 
             } //End Foreach
 
-        }else{
-
-            ?>    
-                        <pre>Please select which kind of logs you would like to get. Check products or categories, select a date and press "Search Logs".</pre> 
-            <?php 
-            exit();
-        } // End if
+        }
 
         ?>
                 </table></pre>
@@ -320,9 +280,11 @@ function loyverse_sync_log(){
                 <pre><strong>No logs to show!</strong></pre>
             <?php 
         } //End if
-    
+         }
     } // End Else if
-} //End function
+        
+ } //End function
+ 
 function ourHTML(){ ?>
     
         <div class ="wrap">
@@ -365,32 +327,45 @@ function ourHTML(){ ?>
 
     global $wpdb;
 
+    $loyverse_token = get_option('lvs_lvtoken','1'); 
+    $WC_user = get_option('lvs_wckey','1');
+    $WC_Secret = get_option('lvs_wcsecret','1');
+    $sync_cat = get_option('lvs_cat');
+
     ?>    
              <pre> Getting Merchant Id from Loyverse.</pre>    
     <?php 
 
-    //Get merchant Id from Loyverse
+    //Get cached merchant_id
     $merchurl = 'https://api.loyverse.com/v1.0/merchant/';
-    $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
-        'headers' => array(
-            'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
-        ),
-    )));
-    $data = json_decode($response,true);
-    if($data['errors']['0']['code'] == "UNAUTHORIZED" ){
+    
+    $merchant_id = get_transient( 'Merchant_id' );
+    
+    if ( false === $merchant_id ) {
+        // Transient expired, refresh the data
+        $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
+            ),
+        )));
+        $data = json_decode($response,true);
+        if($data['errors']['0']['code'] == "UNAUTHORIZED" ){
+    
+            ?>    
+                 <pre> Cannot retrieve Merchant ID from Loyverse. Please verify the Loyverse API Token.</pre>
+                 <pre><strong>Error Message: <?php echo $data['errors']['0']['code'] ?> ,<?php echo $data['errors']['0']['details'] ?></strong></pre>    
+        <?php 
+        exit();
+        }else{
+    
+            $merchant_id = $data['id'];
+           
+            set_transient( 'Merchant_id', $merchant_id, 60 * 60 );
 
-        ?>    
-             <pre> Cannot retrieve Merchant ID from Loyverse. Please verify the Loyverse API Token.</pre>
-             <pre><strong>Error Message: <?php echo $data['errors']['0']['code'] ?> ,<?php echo $data['errors']['0']['details'] ?></strong></pre>    
-    <?php 
-    exit();
-    }else{
-
-        $merchant_id = $data['id'];
-
+        }
+        
     }
 
-    
     $settingsurl = 'https://sync.galaxeos.net/api/settings';
     $FunctionKey = "iEHg3VSq8yHM0n_J4lPNXnmAnRqSH2oHvX-IO5o6gBiIAzFu0KLgkA==";
 
@@ -409,27 +384,30 @@ function ourHTML(){ ?>
         'timeout' => 60,
     );
 
-    $response = wp_remote_post($settingsurl,$args);
-    
-    if ( is_wp_error( $response ) ) {
-        $error_message = $response->get_error_message();
-        echo '<pre>';
-        echo "Something went wrong: $error_message";
-        echo '</pre>';
-        exit();
-     } else {
-        
-        $data = json_decode(wp_remote_retrieve_body($response), true);
+    $merchant_settings = get_transient( 'Merchant_settings' );
 
-     }
+    if ( false === $merchant_settings ) {
+        // Transient expired, refresh the data
+        $response = wp_remote_post($settingsurl,$args);
+        
+        if ( is_wp_error( $response ) ) {
+            $error_message = $response->get_error_message();
+            echo '<pre>';
+            echo "Something went wrong: $error_message";
+            echo '</pre>';
+            exit();
+        } else {
+            
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+            set_transient( 'Merchant_settings', $data, 60 * 60 );
+            $merchant_settings = $data;
+
+        }
+    }
     
      # if there is a merchant
-    if($data){
-          
-        $loyverse_token = get_option('lvs_lvtoken','1'); 
-        $WC_user = get_option('lvs_wckey','1');
-        $WC_Secret = get_option('lvs_wcsecret','1');
-        $sync_cat = get_option('lvs_cat');
+    if($merchant_settings){
+         
  
         ?>    
              <pre> Merchant already exists in Azure. Updating information.</pre> 
@@ -475,11 +453,6 @@ function ourHTML(){ ?>
         ?>    
              <pre> No Merchant found. Saving information.</pre>
          <?php 
-        
-        $loyverse_token = get_option('lvs_lvtoken','1'); 
-        $WC_user = get_option('lvs_wckey','1');
-        $WC_Secret = get_option('lvs_wcsecret','1');
-        $sync_cat = get_option('lvs_cat','1');
 
     // Send to Azure information
     $body = array(
@@ -614,7 +587,6 @@ function ourHTML(){ ?>
 
  }
  }
- ob_end_flush();
 $loyverseSyncPlugin = new LoyverseSyncPlugin();
 
 ?>
