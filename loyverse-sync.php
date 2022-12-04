@@ -298,9 +298,13 @@ function ourHTML(){ ?>
 
             </form>
         </div>
-        
         <?php 
-    
+
+        if ( $_GET['settings-updated'] == 'true' ) { 
+            ?>    
+            <pre> Checking Azure.</pre>    
+    <?php              
+
     $url = site_url();
    // $wcwebhookurl="https://sync.galaxeos.net/api/WCItems";
     $lvitemswebhook ="https://sync.galaxeos.net/api/products";
@@ -586,6 +590,8 @@ function ourHTML(){ ?>
   }
 
  }
+}
+
  }
 $loyverseSyncPlugin = new LoyverseSyncPlugin();
 
