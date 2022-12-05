@@ -3,7 +3,7 @@
 * Plugin Name: Loyverse-Sync
 * Plugin URI: https://github.com/zoltar00/Loyverse-sync/
 * Description: Synching of Loyverse POS to Woocommerce
-* Version: 2.0.5
+* Version: 2.0.6
 * Author: Galaxeos SàRL
 * Author URI: https://galaxeos.net/
 **/
@@ -137,6 +137,11 @@ function loyverse_sync_log(){
         global $wpdb;
 
         //Put checkboxes on page
+        $lvs_lvtoken=get_option('lvs_lvtoken');
+        $lvs_wckey=get_option('lvs_wckey');
+        $lvs_wcsecret=get_option('lvs_wcsecret');
+        $lvs_cat=get_option('lvs_cat');
+        $lvs_cat=get_option('lvs_license');
 
         ?>
 
@@ -144,6 +149,11 @@ function loyverse_sync_log(){
             <h1>Loyverse Sync Logs</h1>
             <pre>Please select which kind of logs you would like to get. Check products or categories, select a date and press "Search Logs".</pre>
             <form action="options.php" method="POST"> 
+            <input type="hidden" name="lvs_lvtoken" value="<?php echo $lvs_lvtoken ?>"></input> 
+            <input type="hidden" name="lvs_wckey" value="<?php echo $lvs_wckey ?>"></input>
+            <input type="hidden" name="lvs_wcsecret" value="<?php echo $lvs_wcsecret ?>"></input>
+            <input type="hidden" name="lvs_cat" value="<?php echo $lvs_cat ?>"></input>
+            <input type="hidden" name="lvs_license" value="<?php echo $lvs_license ?>"></input>
                 <?php
                     settings_fields('loyversesyncplugin');
                     do_settings_sections('loyverse-sync-log');
@@ -298,9 +308,13 @@ function ourHTML(){ ?>
 
             </form>
         </div>
-        
         <?php 
-    
+
+        if ( $_GET['settings-updated'] == 'true' ) { 
+            ?>    
+            <pre> Checking Azure.</pre>    
+    <?php              
+
     $url = site_url();
    // $wcwebhookurl="https://sync.galaxeos.net/api/WCItems";
     $lvitemswebhook ="https://sync.galaxeos.net/api/products";
@@ -586,6 +600,8 @@ function ourHTML(){ ?>
   }
 
  }
+ }
+
  }
 $loyverseSyncPlugin = new LoyverseSyncPlugin();
 
