@@ -141,11 +141,7 @@ function loyverse_sync_log(){
         $lvs_wckey=get_option('lvs_wckey');
         $lvs_wcsecret=get_option('lvs_wcsecret');
         $lvs_cat=get_option('lvs_cat');
-
-        print_r($lvs_lvtoken);
-        print_r($lvs_wckey);
-        print_r($lvs_wcsecret);
-        print_r($lvs_cat);
+        $lvs_cat=get_option('lvs_license');
 
         ?>
 
@@ -157,6 +153,7 @@ function loyverse_sync_log(){
             <input type="hidden" name="lvs_wckey" value="<?php echo $lvs_wckey ?>"></input>
             <input type="hidden" name="lvs_wcsecret" value="<?php echo $lvs_wcsecret ?>"></input>
             <input type="hidden" name="lvs_cat" value="<?php echo $lvs_cat ?>"></input>
+            <input type="hidden" name="lvs_license" value="<?php echo $lvs_license ?>"></input>
                 <?php
                     settings_fields('loyversesyncplugin');
                     do_settings_sections('loyverse-sync-log');
@@ -603,7 +600,7 @@ function ourHTML(){ ?>
   }
 
  }
-}
+ }
 
  }
 $loyverseSyncPlugin = new LoyverseSyncPlugin();
