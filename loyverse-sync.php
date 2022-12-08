@@ -141,7 +141,7 @@ function loyverse_sync_log(){
         $lvs_wckey=get_option('lvs_wckey');
         $lvs_wcsecret=get_option('lvs_wcsecret');
         $lvs_cat=get_option('lvs_cat');
-        $lvs_cat=get_option('lvs_license');
+        $lvs_license=get_option('lvs_license');
 
         ?>
 
@@ -315,294 +315,350 @@ function ourHTML(){ ?>
             <pre> Checking Azure.</pre>    
     <?php              
 
+        $this->CallAzure();
+
+  }
+
+ }
+ function CallAzure(){
+
     $url = site_url();
-   // $wcwebhookurl="https://sync.galaxeos.net/api/WCItems";
-    $lvitemswebhook ="https://sync.galaxeos.net/api/products";
-    $lvstockwebhook = "https://sync.galaxeos.net/api/stock";
-
-   // $bodywcwh = array(
-    //    'name'    => 'Create Product',
-   //     'topic'   => 'product.created',
-   //     'delivery_url' => $wcwebhookurl
-   // );
-    $bodylvwhitems = array(
-        'url'    => $lvitemswebhook,
-        'type'   => 'items.update',
-        'status' => 'ENABLED'
-    );
-    $bodylvwhstock = array(
-        'url'    => $lvstockwebhook,
-        'type'   => 'inventory_levels.update',
-        'status' => 'ENABLED'
-    );
-
-    
-    //print_r($url);
-
-    global $wpdb;
-
-    $loyverse_token = get_option('lvs_lvtoken','1'); 
-    $WC_user = get_option('lvs_wckey','1');
-    $WC_Secret = get_option('lvs_wcsecret','1');
-    $sync_cat = get_option('lvs_cat');
-
-    ?>    
-             <pre> Getting Merchant Id from Loyverse.</pre>    
-    <?php 
-
-    //Get cached merchant_id
-    $merchurl = 'https://api.loyverse.com/v1.0/merchant/';
-    
-    $merchant_id = get_transient( 'Merchant_id' );
-    
-    if ( false === $merchant_id ) {
-        // Transient expired, refresh the data
-        $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
-            'headers' => array(
-                'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
-            ),
-        )));
-        $data = json_decode($response,true);
-        if($data['errors']['0']['code'] == "UNAUTHORIZED" ){
-    
-            ?>    
-                 <pre> Cannot retrieve Merchant ID from Loyverse. Please verify the Loyverse API Token.</pre>
-                 <pre><strong>Error Message: <?php echo $data['errors']['0']['code'] ?> ,<?php echo $data['errors']['0']['details'] ?></strong></pre>    
-        <?php 
-        exit();
-        }else{
-    
-            $merchant_id = $data['id'];
-           
-            set_transient( 'Merchant_id', $merchant_id, 60 * 60 );
-
-        }
-        
-    }
-
-    $settingsurl = 'https://sync.galaxeos.net/api/settings';
-    $FunctionKey = "iEHg3VSq8yHM0n_J4lPNXnmAnRqSH2oHvX-IO5o6gBiIAzFu0KLgkA==";
-
-    // Check if already exists in Azure
-    $body = array(
-        'operation'    => 'read',
-        'merchant_id'   => $merchant_id
-    );
-
-    $args = array(
-        'headers' => array(
-            'x-function-key'=> $FunctionKey,
-            'Content-Type' => 'application/json'
-        ),
-        'body'        => json_encode($body),
-        'timeout' => 60,
-    );
-
-    $merchant_settings = get_transient( 'Merchant_settings' );
-
-    if ( false === $merchant_settings ) {
-        // Transient expired, refresh the data
-        $response = wp_remote_post($settingsurl,$args);
-        
-        if ( is_wp_error( $response ) ) {
-            $error_message = $response->get_error_message();
-            echo '<pre>';
-            echo "Something went wrong: $error_message";
-            echo '</pre>';
-            exit();
-        } else {
+    // $wcwebhookurl="https://sync.galaxeos.net/api/WCItems";
+     
+     $lvitemswebhook ="https://sync.galaxeos.net/api/products";
+     $lvstockwebhook = "https://sync.galaxeos.net/api/stock";
+ 
+    // $bodywcwh = array(
+     //    'name'    => 'Create Product',
+    //     'topic'   => 'product.created',
+    //     'delivery_url' => $wcwebhookurl
+    // );
+     $bodylvwhitems = array(
+         'url'    => $lvitemswebhook,
+         'type'   => 'items.update',
+         'status' => 'ENABLED'
+     );
+     $bodylvwhstock = array(
+         'url'    => $lvstockwebhook,
+         'type'   => 'inventory_levels.update',
+         'status' => 'ENABLED'
+     );
+ 
+     
+     //print_r($url);
+ 
+     global $wpdb;
+ 
+     $loyverse_token = get_option('lvs_lvtoken','1'); 
+     $WC_user = get_option('lvs_wckey','1');
+     $WC_Secret = get_option('lvs_wcsecret','1');
+     $sync_cat = get_option('lvs_cat');
+     $license = get_option('lvs_license','1');
+ 
+     ?>    
+              <pre> Getting Merchant Id from Loyverse.</pre>    
+     <?php 
+ 
+     //Get cached merchant_id
+     $merchurl = 'https://api.loyverse.com/v1.0/merchant/';
+     
+     $merchant_id = get_transient( 'Merchant_id' );
+     
+     if ( false === $merchant_id ) {
+         // Transient expired, refresh the data
+         $response = wp_remote_retrieve_body(wp_remote_get($merchurl, array(
+             'headers' => array(
+                 'Authorization' => 'Bearer ' . get_option('lvs_lvtoken')
+             ),
+         )));
+         $data = json_decode($response,true);
+         if($data['errors']['0']['code'] == "UNAUTHORIZED" ){
+     
+             ?>    
+                  <pre> Cannot retrieve Merchant ID from Loyverse. Please verify the Loyverse API Token.</pre>
+                  <pre><strong>Error Message: <?php echo $data['errors']['0']['code'] ?> ,<?php echo $data['errors']['0']['details'] ?></strong></pre>    
+         <?php 
+         exit();
+         }else{
+     
+             $merchant_id = $data['id'];
             
-            $data = json_decode(wp_remote_retrieve_body($response), true);
-            set_transient( 'Merchant_settings', $data, 60 * 60 );
-            $merchant_settings = $data;
-
-        }
-    }
-    
-     # if there is a merchant
-    if($merchant_settings){
+             set_transient( 'Merchant_id', $merchant_id, 60 * 60 );
+ 
+         }
          
- 
-        ?>    
-             <pre> Merchant already exists in Azure. Updating information.</pre> 
-             <pre><strong>If needed refresh page to update the values.</strong></pre>
-         <?php 
-
-        $body = array(
-            'operation'    => 'update',
-            'merchant_id'   => $merchant_id,
-            'loyverse_secret' => $loyverse_token,
-            'wc_username' => $WC_user,
-            'wc_secret' => $WC_Secret,
-            'sync_cat' => $sync_cat,
-            'site_url' => $url
-        );
-
-        $args = array(
-            'headers' => array(
-                'x-function-key'=> $FunctionKey,
-                'Content-Type' => 'application/json'
-            ),
-            'body'        => json_encode($body),
-            'timeout' => 60,
-        );
-    
-        $response = wp_remote_post($settingsurl,$args);
-
-        if ( is_wp_error( $response ) ) {
-            $error_message = $response->get_error_message();
-            echo '<pre>';
-            echo "Something went wrong: $error_message";
-            echo '</pre>';
-            exit();
-        } else {
- 
-            $data = json_decode(wp_remote_retrieve_body($response), true);
-        
      }
-
-    }
-    else{
-
-        ?>    
-             <pre> No Merchant found. Saving information.</pre>
-         <?php 
-
-    // Send to Azure information
-    $body = array(
-        'operation'    => 'insert',
-        'merchant_id'   => $merchant_id,
-        'loyverse_secret' => $loyverse_token,
-        'wc_username' => $WC_user,
-        'wc_secret' => $WC_Secret,
-        'sync_cat' => $sync_cat,
-        'site_url' => $url,
-    );
-
-    $args = array(
-        'headers' => array(
-            'x-function-key'=> $FunctionKey,
-            'Content-Type' => 'application/json'
-        ),
-        'body'        => json_encode($body),
-        'timeout' => 60,
-    );
-
-    $response = wp_remote_post($settingsurl,$args);
+ 
+     $settingsurl = 'https://sync.galaxeos.net/api/settings';
+     $licenseAPI = "https://sync.galaxeos.net/api/license";
+     $FunctionKey = "iEHg3VSq8yHM0n_J4lPNXnmAnRqSH2oHvX-IO5o6gBiIAzFu0KLgkA==";
+     $LicFunctionKey = "fnJ1lepOVcqjmwoEdaBOg9knIhr-tg_Z-J_NJYOdXBaOAzFuAD0hSg==";
+ 
+     ?>    
+     <pre> Checking License information.</pre> 
+     
+   <?php 
+ 
+     $bodylicense = array(
+         'merchant_id'    => $merchant_id,
+         'license_id'   => $license,
+         'expdate' => ''
+     );
+ 
+     $argslic = array(
+         'headers' => array(
+             'x-function-key'=> $LicFunctionKey,
+             'Content-Type' => 'application/json'
+         ),
+         'body'        => json_encode($bodylicense),
+         'timeout' => 60,
+     );
+ 
+  
+    #Send license tzo Azure
+ 
+    $response = wp_remote_post($licenseAPI,$argslic);
+      
     if ( is_wp_error( $response ) ) {
         $error_message = $response->get_error_message();
         echo '<pre>';
         echo "Something went wrong: $error_message";
-        echo "Please try again to save!";
         echo '</pre>';
         exit();
+    }else {
+             
+     $data = wp_remote_retrieve_body($response);
+     ?>    
+     <pre> <?php  echo $data ?> </pre> 
+     
+   <?php 
+     
     }
-    else{
-
-    ?>    
-             <pre> Information saved.</pre>
+ 
+     // Check if already exists in Azure
+     $body = array(
+         'operation'    => 'read',
+         'merchant_id'   => $merchant_id
+     );
+ 
+     $args = array(
+         'headers' => array(
+             'x-function-key'=> $FunctionKey,
+             'Content-Type' => 'application/json'
+         ),
+         'body'        => json_encode($body),
+         'timeout' => 60,
+     );
+ 
+ 
+     #Send Merchant to Azure
+ 
+     $merchant_settings = get_transient( 'Merchant_settings' );
+ 
+     if ( false === $merchant_settings ) {
+         // Transient expired, refresh the data
+         $response = wp_remote_post($settingsurl,$args);
+         
+         if ( is_wp_error( $response ) ) {
+             $error_message = $response->get_error_message();
+             echo '<pre>';
+             echo "Something went wrong: $error_message";
+             echo '</pre>';
+             exit();
+         } else {
+             
+             $data = json_decode(wp_remote_retrieve_body($response), true);
+             set_transient( 'Merchant_settings', $data, 60 * 60 );
+             $merchant_settings = $data;
+ 
+         }
+     }
+     
+      # if there is a merchant
+     if($merchant_settings){
+          
+  
+         ?>    
+              <pre> Merchant already exists in Azure. Updating information.</pre> 
+              <pre><strong>If needed refresh page to update the values.</strong></pre>
+          <?php 
+ 
+         $body = array(
+             'operation'    => 'update',
+             'merchant_id'   => $merchant_id,
+             'loyverse_secret' => $loyverse_token,
+             'wc_username' => $WC_user,
+             'wc_secret' => $WC_Secret,
+             'sync_cat' => $sync_cat,
+             'site_url' => $url,
+             'license' => $license,
+         );
+ 
+         $args = array(
+             'headers' => array(
+                 'x-function-key'=> $FunctionKey,
+                 'Content-Type' => 'application/json'
+             ),
+             'body'        => json_encode($body),
+             'timeout' => 60,
+         );
+     
+         $response = wp_remote_post($settingsurl,$args);
+ 
+         if ( is_wp_error( $response ) ) {
+             $error_message = $response->get_error_message();
+             echo '<pre>';
+             echo "Something went wrong: $error_message";
+             echo '</pre>';
+             exit();
+         } else {
+  
+             $data = json_decode(wp_remote_retrieve_body($response), true);
+         
+      }
+ 
+     }
+     else{
+ 
+         ?>    
+              <pre> No Merchant found. Saving information.</pre>
+          <?php 
+ 
+     // Send to Azure information
+     $body = array(
+         'operation'    => 'insert',
+         'merchant_id'   => $merchant_id,
+         'loyverse_secret' => $loyverse_token,
+         'wc_username' => $WC_user,
+         'wc_secret' => $WC_Secret,
+         'sync_cat' => $sync_cat,
+         'site_url' => $url,
+         'license' => $license,
+     );
+ 
+     $args = array(
+         'headers' => array(
+             'x-function-key'=> $FunctionKey,
+             'Content-Type' => 'application/json'
+         ),
+         'body'        => json_encode($body),
+         'timeout' => 60,
+     );
+ 
+     $response = wp_remote_post($settingsurl,$args);
+     if ( is_wp_error( $response ) ) {
+         $error_message = $response->get_error_message();
+         echo '<pre>';
+         echo "Something went wrong: $error_message";
+         echo "Please try again to save!";
+         echo '</pre>';
+         exit();
+     }
+     else{
+ 
+     ?>    
+              <pre> Information saved.</pre>
+          <?php 
+ 
+             # Configure Webhooks
+             ?>    
+                 <pre> Configuring Webhooks.</pre>
+             <?php 
+         
+             $woocommerce = new Client(
+                 $url,
+                 $WC_user,
+                 $WC_Secret,
+                 [
+                     'wp_api' => true,
+                     'version' => 'wc/v3'
+                 ]
+             );
+ 
+             # Items Webhook
+ 
+             ?>    
+                 <pre> Configuring Loyverse Items Webhook.</pre>
+             <?php 
+ 
+             $responseitemswebhooks = wp_remote_post('https://api.loyverse.com/v1.0/webhooks/', array(
+                 'headers' => array(
+                     'Authorization' => 'Bearer ' . $loyverse_token,
+                     'Content-Type' => 'application/json'
+                 ),
+                 'blocking' => true,
+                 'body'        => json_encode($bodylvwhitems),
+                 'timeout' => 60,
+                 
+             ));
+             
+             $response = json_decode(wp_remote_retrieve_body($responseitemswebhooks), TRUE);
+             
+             
+             //print_r($responseitemswebhooks);
+ 
+             if ( is_wp_error( $response ) ) {
+                 $error_message = $response->get_error_message();
+                 echo '<pre>';
+                 echo "Something went wrong: $error_message";
+                 echo "Please try again to save!";
+                 echo '</pre>';
+                 exit();
+             }
+             else{
+         
+             ?>    
+                      <pre> Loyverse Items Webhook Created.</pre>
+                  <?php 
+             }
+ 
+             # Stock Webhook
+             
+             ?>    
+                 <pre> Configuring Loyverse Stock Webhook.</pre>
+             <?php 
+ 
+             $responsestockwebhooks = wp_remote_post('https://api.loyverse.com/v1.0/webhooks/', array(
+                 'headers' => array(
+                     'Authorization' => 'Bearer ' . $loyverse_token,
+                     'Content-Type' => 'application/json'
+                 ),
+                 'blocking' => true,
+                 'body'        => json_encode($bodylvwhstock),
+                 'timeout' => 60,
+                 
+             ));
+             
+             $response = json_decode(wp_remote_retrieve_body($responsestockwebhooks), TRUE);
+             
+             
+             //print_r($responseitemswebhooks);
+ 
+             if ( is_wp_error( $response ) ) {
+                 $error_message = $response->get_error_message();
+                 echo '<pre>';
+                 echo "Something went wrong: $error_message";
+                 echo "Please try again to save!";
+                 echo '</pre>';
+                 exit();
+             }
+             else{
+         
+             ?>    
+                      <pre> Loyverse Stock Webhook Created.</pre>
+                  <?php 
+             }
+             ?>    
+             <pre> All Webhooks configured.</pre>
          <?php 
-
-            # Configure Webhooks
-            ?>    
-                <pre> Configuring Webhooks.</pre>
-            <?php 
-        
-            $woocommerce = new Client(
-                $url,
-                $WC_user,
-                $WC_Secret,
-                [
-                    'wp_api' => true,
-                    'version' => 'wc/v3'
-                ]
-            );
-
-            # Items Webhook
-
-            ?>    
-                <pre> Configuring Loyverse Items Webhook.</pre>
-            <?php 
-
-            $responseitemswebhooks = wp_remote_post('https://api.loyverse.com/v1.0/webhooks/', array(
-                'headers' => array(
-                    'Authorization' => 'Bearer ' . $loyverse_token,
-                    'Content-Type' => 'application/json'
-                ),
-                'blocking' => true,
-                'body'        => json_encode($bodylvwhitems),
-                'timeout' => 60,
-                
-            ));
-            
-            $response = json_decode(wp_remote_retrieve_body($responseitemswebhooks), TRUE);
-            
-            
-            //print_r($responseitemswebhooks);
-
-            if ( is_wp_error( $response ) ) {
-                $error_message = $response->get_error_message();
-                echo '<pre>';
-                echo "Something went wrong: $error_message";
-                echo "Please try again to save!";
-                echo '</pre>';
-                exit();
-            }
-            else{
-        
-            ?>    
-                     <pre> Loyverse Items Webhook Created.</pre>
-                 <?php 
-            }
-
-            # Stock Webhook
-            
-            ?>    
-                <pre> Configuring Loyverse Stock Webhook.</pre>
-            <?php 
-
-            $responsestockwebhooks = wp_remote_post('https://api.loyverse.com/v1.0/webhooks/', array(
-                'headers' => array(
-                    'Authorization' => 'Bearer ' . $loyverse_token,
-                    'Content-Type' => 'application/json'
-                ),
-                'blocking' => true,
-                'body'        => json_encode($bodylvwhstock),
-                'timeout' => 60,
-                
-            ));
-            
-            $response = json_decode(wp_remote_retrieve_body($responsestockwebhooks), TRUE);
-            
-            
-            //print_r($responseitemswebhooks);
-
-            if ( is_wp_error( $response ) ) {
-                $error_message = $response->get_error_message();
-                echo '<pre>';
-                echo "Something went wrong: $error_message";
-                echo "Please try again to save!";
-                echo '</pre>';
-                exit();
-            }
-            else{
-        
-            ?>    
-                     <pre> Loyverse Stock Webhook Created.</pre>
-                 <?php 
-            }
-            ?>    
-            <pre> All Webhooks configured.</pre>
-        <?php 
-
-
-    }
+ 
+ 
+     }
+   }
+ 
   }
 
- }
- }
-
- }
+}
 $loyverseSyncPlugin = new LoyverseSyncPlugin();
 
 ?>
