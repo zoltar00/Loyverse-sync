@@ -398,11 +398,10 @@ function ourHTML(){ ?>
      <pre> Checking License information.</pre> 
      
    <?php 
- 
+
      $bodylicense = array(
          'merchant_id'    => $merchant_id,
-         'license_id'   => $license,
-         'expdate' => ''
+         'license_id'   => $license
      );
  
      $argslic = array(
