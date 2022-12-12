@@ -390,54 +390,13 @@ function ourHTML(){ ?>
      }
  
      $settingsurl = 'https://sync.galaxeos.net/api/settings';
-     $licenseAPI = "https://sync.galaxeos.net/api/license";
      $FunctionKey = "iEHg3VSq8yHM0n_J4lPNXnmAnRqSH2oHvX-IO5o6gBiIAzFu0KLgkA==";
-     $LicFunctionKey = "fnJ1lepOVcqjmwoEdaBOg9knIhr-tg_Z-J_NJYOdXBaOAzFuAD0hSg==";
- 
-     ?>    
-     <pre> Checking License information.</pre> 
-     
-   <?php 
-
-     $bodylicense = array(
-         'merchant_id'    => $merchant_id,
-         'license_id'   => $license
-     );
- 
-     $argslic = array(
-         'headers' => array(
-             'x-function-key'=> $LicFunctionKey,
-             'Content-Type' => 'application/json'
-         ),
-         'body'        => json_encode($bodylicense),
-         'timeout' => 60,
-     );
- 
   
-    #Send license tzo Azure
- 
-    $response = wp_remote_post($licenseAPI,$argslic);
-      
-    if ( is_wp_error( $response ) ) {
-        $error_message = $response->get_error_message();
-        echo '<pre>';
-        echo "Something went wrong: $error_message";
-        echo '</pre>';
-        exit();
-    }else {
-             
-     $data = wp_remote_retrieve_body($response);
-     ?>    
-     <pre> <?php  echo $data ?> </pre> 
-     
-   <?php 
-     
-    }
- 
      // Check if already exists in Azure
      $body = array(
          'operation'    => 'read',
-         'merchant_id'   => $merchant_id
+         'merchant_id'   => $merchant_id,
+         'license' => $license,
      );
  
      $args = array(
@@ -451,12 +410,7 @@ function ourHTML(){ ?>
  
  
      #Send Merchant to Azure
- 
-     $merchant_settings = get_transient( 'Merchant_settings' );
- 
-     if ( false === $merchant_settings ) {
-         // Transient expired, refresh the data
-         $response = wp_remote_post($settingsurl,$args);
+     $response = wp_remote_post($settingsurl,$args);
          
          if ( is_wp_error( $response ) ) {
              $error_message = $response->get_error_message();
@@ -466,12 +420,21 @@ function ourHTML(){ ?>
              exit();
          } else {
              
-             $data = json_decode(wp_remote_retrieve_body($response), true);
-             set_transient( 'Merchant_settings', $data, 60 * 60 );
-             $merchant_settings = $data;
- 
+             $data = wp_remote_retrieve_body($response); 
+    
+
+             if(($data == "License is not valid. Please enter a valid license.") || ($data == "License is empty. Please enter a license.") || ($data == "License has expired. Please renew")){
+                ?>
+                <pre> <?php echo $data ?></pre>
+    
+                 <?php    
+
+                exit();
+             }else{
+
+                $merchant_settings = $data;
+             }
          }
-     }
      
       # if there is a merchant
      if($merchant_settings){
