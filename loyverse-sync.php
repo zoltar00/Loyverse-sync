@@ -3,7 +3,7 @@
 * Plugin Name: Loyverse-Sync
 * Plugin URI: https://github.com/zoltar00/Loyverse-sync/
 * Description: Synching of Loyverse POS to Woocommerce
-* Version: 2.0.7
+* Version: 2.0.8
 * Author: Galaxeos SàRL
 * Author URI: https://galaxeos.net/
 **/
@@ -320,7 +320,7 @@ function ourHTML(){ ?>
   }
 
  }
- function CallAzure(){
+function CallAzure(){
 
     $url = site_url();
     // $wcwebhookurl="https://sync.galaxeos.net/api/WCItems";
@@ -420,22 +420,22 @@ function ourHTML(){ ?>
              exit();
          } else {
              
-             $data = wp_remote_retrieve_body($response); 
-    
+             $data = json_decode(wp_remote_retrieve_body($response),true); 
 
-             if(($data == "License is not valid. Please enter a valid license.") || ($data == "License is empty. Please enter a license.") || ($data == "License has expired. Please renew")){
-                ?>
-                <pre> <?php echo $data ?></pre>
-    
-                 <?php    
+             ?>
+             <pre> <?php echo $data['Message'] ?></pre>
+ 
+              <?php    
+            
+             if($data['Error'] == 1){
 
                 exit();
              }else{
 
-                $merchant_settings = $data;
+                $merchant_settings = $data['Merchant'];
              }
          }
-     
+
       # if there is a merchant
      if($merchant_settings){
           
