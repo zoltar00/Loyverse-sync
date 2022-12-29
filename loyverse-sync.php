@@ -111,9 +111,9 @@ function wone_receive_callback( $request_data){
     
        // Check if already exists in Azure
        $body = array(
-           'operation'    => 'woocommerce',
+           'operation' => 'woocommerce',
            'user_id' => $parameters['user_id'],
-           'wckey'   => $parameters['consumer_key'],
+           'wckey' => $parameters['consumer_key'],
            'wcsecret' => $parameters['consumer_secret'],
        );
    
