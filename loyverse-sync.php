@@ -62,11 +62,18 @@ $myUpdateChecker->setBranch('release');
 
 require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
+
+//register_activation_hook( __FILE__, 'makeplugins_endpoints_activate' );
+//register_deactivation_hook( __FILE__, 'makeplugins_endpoints_deactivate' );
+
+//require('test_callback.php');
+
 Class LoyverseSyncPlugin {
 
 function __construct(){
 
         add_action('admin_menu', array($this,'adminPage'));
+        add_action('rest_api_init',array($this,'wone_add_callback_url_endpoint'));
         add_action( 'admin_init', array($this,'settings'));
         add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_settings_link' ) );
        // add_action( 'lvs_cron', array($this,'loyverse_sync' ));
@@ -74,7 +81,71 @@ function __construct(){
         /*add_action('admin_menu', 'lvsync_create_menu');*/
 
     }
+function wone_add_callback_url_endpoint(){
 
+        register_rest_route(
+    
+           '/wc/v1/', //Namespace
+           'auth-callback', //Endpoint
+           array(
+               'methods' => 'POST',
+               'callback' => [$this,'wone_receive_callback']
+           )
+        );
+    
+    }
+function wone_receive_callback( $request_data){
+            
+      //  $data = array();
+       
+       $parameters = $request_data->get_params();
+        //$data['returned_data'] = $parameters;
+       add_option( 'lvs_params', $parameters); 
+       update_option( 'lvs_wckey', $parameters['consumer_key'] );
+       update_option( 'lvs_wcsecret', $parameters['consumer_secret'] );
+
+       //Send data to Azure
+
+       $authorizeurl = 'https://sync-dev.galaxeos.net/api/authorize';
+       $FunctionKey = "w83ERdrtiS3vLOblzqO1nVkFexBCEye_Z7xfvMjHofMRAzFunLN2yQ==";
+    
+       // Check if already exists in Azure
+       $body = array(
+           'operation'    => 'woocommerce',
+           'user_id' => $parameters['user_id'],
+           'wckey'   => $parameters['consumer_key'],
+           'wcsecret' => $parameters['consumer_secret'],
+       );
+   
+       $args = array(
+           'headers' => array(
+               'x-function-key'=> $FunctionKey,
+               'Content-Type' => 'application/json'
+           ),
+           'body'        => json_encode($body),
+           'timeout' => 60,
+       );
+
+        #Send Merchant to Azure
+        $response = wp_remote_post($authorizeurl,$args);
+            
+        if ( is_wp_error( $response ) ) {
+            $error_message = $response->get_error_message();
+            echo '<pre>';
+            echo "Something went wrong: $error_message";
+            echo '</pre>';
+            exit();
+        } else {
+            
+            $data = json_decode(wp_remote_retrieve_body($response),true);
+
+        }
+ //      return $data;
+
+  //    wp_redirect( 'https://wone.ch/wp-admin/options-general.php?page=loyverse-sync-settings-page' );
+//      exit();
+
+    } 
 function plugin_settings_link($links) {
         $url = get_admin_url() . 'options-general.php?page=loyverse-sync-settings-page';
         $settings_link = '<a href="'.$url.'">' . __( 'Settings', 'textdomain' ) . '</a>';
@@ -231,11 +302,12 @@ function loyverse_sync_log(){
         
         if(filter_has_var(INPUT_POST,'products')) {
             foreach($data as $item){
+                print_r($item);
                 $time = $item['TableTimestamp'];
                 $script = $item['script'];
                 $description = $item['description'];
                 
-                if(($script == "products") && ($time == filter_has_var(INPUT_POST,'logdate'))){
+                if($script == "products"){
                     ?><tr><td style="text-align: center; vertical-align: middle;">
                     <?php
                     echo $time;
@@ -260,7 +332,7 @@ function loyverse_sync_log(){
                 $script = $item['script'];
                 $description = $item['description'];
                 
-                if(($script == "categories") && ($time == filter_has_var(INPUT_POST,'logdate'))){
+                if($script == "categories"){
                     ?><tr><td style="text-align: center; vertical-align: middle;">
                     <?php
                     echo $time;
@@ -296,7 +368,7 @@ function loyverse_sync_log(){
  } //End function
  
 function ourHTML(){ ?>
-    
+
         <div class ="wrap">
             <h1>Loyverse Sync Settings</h1>
             <form action="options.php" method="POST">
@@ -620,7 +692,7 @@ function CallAzure(){
  
   }
 
-}
+ }
 $loyverseSyncPlugin = new LoyverseSyncPlugin();
 
 ?>
