@@ -89,7 +89,8 @@ function wone_add_callback_url_endpoint(){
            'auth-callback', //Endpoint
            array(
                'methods' => 'POST',
-               'callback' => [$this,'wone_receive_callback']
+               'callback' => [$this,'wone_receive_callback'],
+               'permission_callback' => '__return_true',
            )
         );
     
