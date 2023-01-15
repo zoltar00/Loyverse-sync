@@ -85,8 +85,8 @@ function wone_add_callback_url_endpoint(){
 
         register_rest_route(
     
-           '/wc/v1/', //Namespace
-           'auth-callback', //Endpoint
+           'wc/v1', //Namespace
+           '/auth-callback/', //Endpoint
            array(
                'methods' => 'POST',
                'callback' => [$this,'wone_receive_callback'],
